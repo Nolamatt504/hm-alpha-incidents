@@ -9,6 +9,7 @@ import {
   getCurrentProfile,
   UserProfile,
   canManageUsers,
+  isCorporate,
   ROLE_LABELS,
 } from "@/lib/auth";
 import type { User } from "@supabase/supabase-js";
@@ -89,6 +90,14 @@ export default function Header() {
               >
                 Dashboard
               </Link>
+              {isCorporate(profile) && (
+                <Link
+                  href="/archives"
+                  className="px-2.5 sm:px-3 py-2 sm:py-1.5 rounded-md text-gray-700 hover:bg-gray-100 font-medium text-xs sm:text-sm"
+                >
+                  Archives
+                </Link>
+              )}
               <Link
                 href="/new"
                 className="px-2.5 sm:px-3 py-2 sm:py-1.5 rounded-md text-gray-700 hover:bg-gray-100 font-medium text-xs sm:text-sm"
