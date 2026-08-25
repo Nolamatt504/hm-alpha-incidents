@@ -272,7 +272,7 @@ function ReportDetailContent() {
         <main className="max-w-3xl mx-auto px-4 py-8">
           <p className="text-red-600">{error || "Report not found"}</p>
           <Link href="/dashboard" className="text-[#0b1f3a] text-sm mt-4 inline-block">
-            \u2190 Back to Dashboard
+            Back to Dashboard
           </Link>
         </main>
       </div>
@@ -349,7 +349,7 @@ function ReportDetailContent() {
         <div className="print-only mb-6 pb-4 border-b border-gray-300">
           <BrandLogo className="h-10 w-auto mb-2" />
           <p className="text-sm font-semibold text-gray-900">Incident Report</p>
-          <p className="text-xs text-gray-500">HM Alpha Hotels &amp; Resorts \u00b7 Confidential</p>
+          <p className="text-xs text-gray-500">HM Alpha Hotels &amp; Resorts · Confidential</p>
         </div>
 
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
@@ -359,7 +359,7 @@ function ReportDetailContent() {
                 {incident.report_number}
               </h1>
               <p className="text-sm text-gray-500 mt-0.5">
-                {incident.hotel?.name || "\u2014"} \u00b7{" "}
+                {incident.hotel?.name || "\u2014"} ·{" "}
                 {new Date(incident.incident_date_time).toLocaleString()}
               </p>
               <p className="text-sm text-gray-500 mt-1">
@@ -466,7 +466,7 @@ function ReportDetailContent() {
                 What staff did
               </h2>
               <p className="text-xs text-gray-500 mb-2">
-                Response is the most valuable field for claims \u2014 first aid,
+                Response is the most valuable field for claims: first aid,
                 area secured, photos, medical refused, who was notified.
               </p>
               <p className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">
@@ -578,7 +578,7 @@ function ReportDetailContent() {
                 Activity / follow-up
               </h2>
               <p className="text-xs text-gray-500 mb-3">
-                Insurance-ready audit trail \u2014 timestamps and who did what.
+                Insurance-ready audit trail: timestamps and who did what.
                 Newest first.
               </p>
               {activity.length === 0 ? (

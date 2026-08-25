@@ -423,8 +423,8 @@ export default function NewIncidentForm() {
         </p>
         <p className="mt-3 text-xs text-amber-900 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
           Confidential record. Only staff at this hotel and Corporate Admin can
-          see submitted reports. Document what happened <strong>and</strong> what
-          staff did while it is fresh \u2014 claims teams rely on the response.
+          see submitted reports. Write what happened <strong>and</strong> what
+          staff did while it is still fresh. Claims teams rely on that response.
         </p>
       </div>
 
@@ -432,7 +432,7 @@ export default function NewIncidentForm() {
         <div className="mb-6 rounded-lg bg-green-50 border border-green-200 px-4 py-3 text-green-800 text-sm leading-relaxed">
           <p>{successMessage}</p>
           <a href="/dashboard" className="inline-block mt-2 font-medium text-[#0b1f3a] hover:underline">
-            Go to Dashboard \u2192
+            Go to Dashboard
           </a>
         </div>
       )}
@@ -717,7 +717,7 @@ export default function NewIncidentForm() {
         <section className="bg-white shadow-sm rounded-xl border border-gray-200 p-6">
           <div className="border-b border-gray-100 pb-2 mb-4">
             <h2 className="text-lg font-medium text-gray-900">5. Response flags</h2>
-            <p className="text-xs text-gray-500 mt-0.5">EMS, medical refusal, and police \u2014 also important for claims</p>
+            <p className="text-xs text-gray-500 mt-0.5">EMS, medical refusal, and police. Also important for claims.</p>
           </div>
           <div className="flex flex-wrap gap-6">
             <label className="inline-flex items-center gap-2 cursor-pointer">
