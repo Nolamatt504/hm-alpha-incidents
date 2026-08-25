@@ -67,6 +67,11 @@ export function canManageReports(profile: UserProfile | null): boolean {
   );
 }
 
+/** Only Hotel Admin can send a report to corporate */
+export function canSendToCorporate(profile: UserProfile | null): boolean {
+  return isPropertyAdmin(profile);
+}
+
 export const ROLE_LABELS: Record<UserRole, string> = {
   submitter: "Submitter",
   property_hr: "Property HR",

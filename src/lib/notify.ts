@@ -14,8 +14,9 @@ interface NotifyPayload {
 }
 
 /**
- * Asks the API to email Hotel Admins for the hotel plus Corporate Admins.
- * Recipients are resolved server-side. Fails silently so report save is never blocked.
+ * Asks the API to email stakeholders. Recipients are resolved server-side.
+ * new_report sends nobody. sent_to_corporate emails Corporate Admins only.
+ * Fails silently so report save is never blocked.
  */
 export async function notifyStakeholders(payload: NotifyPayload) {
   try {
