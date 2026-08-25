@@ -1,1 +1,1 @@
-loading
+FULL_DASHBOARD_PAGE

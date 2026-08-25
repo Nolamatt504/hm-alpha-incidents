@@ -1,1 +1,1 @@
-loading
+FULL_REPORT_PAGE
