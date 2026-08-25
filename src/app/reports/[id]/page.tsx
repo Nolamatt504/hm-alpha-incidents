@@ -17,10 +17,12 @@ import {
 import { notifyStakeholders } from "@/lib/notify";
 import {
   Incident,
+  IncidentActivity,
   IncidentStatus,
   INCIDENT_TYPE_LABELS,
   SEVERITY_LABELS,
   STATUS_LABELS,
+  ACTIVITY_ACTION_LABELS,
 } from "@/types/incident";
 
 interface Attachment {
@@ -43,6 +45,9 @@ function ReportDetailContent() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [investigationNotes, setInvestigationNotes] = useState("");
+  const [activity, setActivity] = useState<IncidentActivity[]>([]);
+  const [comment, setComment] = useState("");
+  const [commentSaving, setCommentSaving] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -82,6 +87,18 @@ function ReportDetailContent() {
           })
         );
         setAttachments(withUrls);
+      }
+
+      const { data: activityRows, error: activityError } = await supabase
+        .from("incident_activity")
+        .select("id, incident_id, actor_id, actor_name, action, detail, created_at")
+        .eq("incident_id", id)
+        .order("created_at", { ascending: false });
+
+      if (activityError) {
+        setActivity([]);
+      } else {
+        setActivity((activityRows as IncidentActivity[]) || []);
       }
 
       setLoading(false);
@@ -176,6 +193,36 @@ function ReportDetailContent() {
     setSaving(false);
   }
 
+  async function addComment() {
+    if (!incident || !profile) return;
+    const detail = comment.trim();
+    if (!detail) return;
+    setCommentSaving(true);
+    setMessage(null);
+
+    const { data, error: insertError } = await supabase
+      .from("incident_activity")
+      .insert({
+        incident_id: incident.id,
+        actor_id: profile.id,
+        actor_name: profile.full_name || profile.email,
+        action: "comment",
+        detail,
+      })
+      .select("id, incident_id, actor_id, actor_name, action, detail, created_at")
+      .single();
+
+    if (insertError) {
+      setMessage("Error: " + insertError.message);
+    } else if (data) {
+      setActivity((prev) => [data as IncidentActivity, ...prev]);
+      setComment("");
+      setMessage("Follow-up added");
+      setTimeout(() => setMessage(null), 2500);
+    }
+    setCommentSaving(false);
+  }
+
   async function restoreReport() {
     if (!incident) return;
     setSaving(true);
@@ -225,7 +272,7 @@ function ReportDetailContent() {
         <main className="max-w-3xl mx-auto px-4 py-8">
           <p className="text-red-600">{error || "Report not found"}</p>
           <Link href="/dashboard" className="text-[#0b1f3a] text-sm mt-4 inline-block">
-            ← Back to Dashboard
+            \u2190 Back to Dashboard
           </Link>
         </main>
       </div>
@@ -277,6 +324,16 @@ function ReportDetailContent() {
           </div>
         )}
 
+        <div className="mb-4 rounded-lg bg-amber-50 border border-amber-300 px-4 py-3 text-amber-950 text-sm">
+          <p className="font-semibold uppercase tracking-wide text-xs">
+            Confidential
+          </p>
+          <p className="mt-0.5">
+            Internal HM Alpha Hotels &amp; Resorts record. Do not share outside
+            authorized staff. This banner prints with the report.
+          </p>
+        </div>
+
         {message && (
           <div
             className={`mb-4 rounded-lg px-4 py-2 text-sm ${
@@ -292,7 +349,7 @@ function ReportDetailContent() {
         <div className="print-only mb-6 pb-4 border-b border-gray-300">
           <BrandLogo className="h-10 w-auto mb-2" />
           <p className="text-sm font-semibold text-gray-900">Incident Report</p>
-          <p className="text-xs text-gray-500">HM Alpha Hotels &amp; Resorts · Confidential</p>
+          <p className="text-xs text-gray-500">HM Alpha Hotels &amp; Resorts \u00b7 Confidential</p>
         </div>
 
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
@@ -302,7 +359,7 @@ function ReportDetailContent() {
                 {incident.report_number}
               </h1>
               <p className="text-sm text-gray-500 mt-0.5">
-                {incident.hotel?.name || "—"} ·{" "}
+                {incident.hotel?.name || "\u2014"} \u00b7{" "}
                 {new Date(incident.incident_date_time).toLocaleString()}
               </p>
               <p className="text-sm text-gray-500 mt-1">
@@ -336,7 +393,7 @@ function ReportDetailContent() {
                 <div>
                   <p className="text-gray-500">Location</p>
                   <p className="font-medium text-gray-900">
-                    {incident.location_detail || "—"}
+                    {incident.location_detail || "\u2014"}
                   </p>
                 </div>
                 <div>
@@ -344,7 +401,7 @@ function ReportDetailContent() {
                   <p className="font-medium text-gray-900">
                     {incident.reported_date_time
                       ? new Date(incident.reported_date_time).toLocaleString()
-                      : "—"}
+                      : "\u2014"}
                   </p>
                 </div>
               </div>
@@ -358,7 +415,7 @@ function ReportDetailContent() {
                 <div>
                   <p className="text-gray-500">Subject</p>
                   <p className="font-medium text-gray-900">
-                    {incident.subject_name || "—"}{" "}
+                    {incident.subject_name || "\u2014"}{" "}
                     {incident.subject_type && (
                       <span className="text-gray-500 font-normal">
                         ({incident.subject_type})
@@ -384,7 +441,7 @@ function ReportDetailContent() {
                 <div>
                   <p className="text-gray-500">Witness</p>
                   <p className="font-medium text-gray-900">
-                    {incident.witness_name || "—"}
+                    {incident.witness_name || "\u2014"}
                   </p>
                   {incident.witness_contact && (
                     <p className="text-gray-500 text-xs mt-0.5">
@@ -404,20 +461,21 @@ function ReportDetailContent() {
               </p>
             </section>
 
-            {(incident.actions_taken ||
-              incident.contributing_factors ||
-              incident.miscellaneous) && (
+            <section className="rounded-lg border border-[#0b1f3a]/15 bg-slate-50 p-4">
+              <h2 className="text-sm font-semibold text-[#0b1f3a] uppercase tracking-wider mb-1">
+                What staff did
+              </h2>
+              <p className="text-xs text-gray-500 mb-2">
+                Response is the most valuable field for claims \u2014 first aid,
+                area secured, photos, medical refused, who was notified.
+              </p>
+              <p className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">
+                {incident.actions_taken || "Not recorded."}
+              </p>
+            </section>
+
+            {(incident.contributing_factors || incident.miscellaneous) && (
               <section className="space-y-4">
-                {incident.actions_taken && (
-                  <div>
-                    <h3 className="text-sm font-medium text-gray-500 mb-1">
-                      Immediate Actions Taken
-                    </h3>
-                    <p className="text-sm text-gray-800 whitespace-pre-wrap">
-                      {incident.actions_taken}
-                    </p>
-                  </div>
-                )}
                 {incident.contributing_factors && (
                   <div>
                     <h3 className="text-sm font-medium text-gray-500 mb-1">
@@ -515,6 +573,70 @@ function ReportDetailContent() {
               </section>
             )}
 
+            <section className="border-t border-gray-100 pt-6">
+              <h2 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-3">
+                Activity / follow-up
+              </h2>
+              <p className="text-xs text-gray-500 mb-3">
+                Insurance-ready audit trail \u2014 timestamps and who did what.
+                Newest first.
+              </p>
+              {activity.length === 0 ? (
+                <p className="text-sm text-gray-500">
+                  No activity recorded yet.
+                </p>
+              ) : (
+                <ol className="space-y-3">
+                  {activity.map((row) => (
+                    <li
+                      key={row.id}
+                      className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5"
+                    >
+                      <div className="flex flex-wrap items-baseline justify-between gap-2">
+                        <p className="text-sm font-medium text-gray-900">
+                          {ACTIVITY_ACTION_LABELS[row.action] || row.action}
+                        </p>
+                        <p className="text-[11px] text-gray-400">
+                          {new Date(row.created_at).toLocaleString()}
+                        </p>
+                      </div>
+                      {row.detail && (
+                        <p className="mt-1 text-sm text-gray-700 whitespace-pre-wrap">
+                          {row.detail}
+                        </p>
+                      )}
+                      <p className="mt-1 text-xs text-gray-500">
+                        {row.actor_name || "System"}
+                      </p>
+                    </li>
+                  ))}
+                </ol>
+              )}
+
+              {canManageReports(profile) && !incident.archived_at && (
+                <div className="mt-4 print:hidden">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Add follow-up
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={comment}
+                    onChange={(e) => setComment(e.target.value)}
+                    placeholder="Document a call, guest update, or next step\u2026"
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#0b1f3a]"
+                  />
+                  <button
+                    type="button"
+                    onClick={addComment}
+                    disabled={commentSaving || !comment.trim()}
+                    className="mt-2 px-3 py-1.5 rounded-lg bg-[#0b1f3a] text-white text-sm font-medium hover:bg-[#08182e] disabled:opacity-50"
+                  >
+                    {commentSaving ? "Saving\u2026" : "Add follow-up"}
+                  </button>
+                </div>
+              )}
+            </section>
+
             {canEdit && (
               <section className="border-t border-gray-100 pt-6 space-y-4">
                 <h2 className="text-sm font-medium text-gray-500 uppercase tracking-wider">
@@ -530,7 +652,7 @@ function ReportDetailContent() {
                     value={investigationNotes}
                     onChange={(e) => setInvestigationNotes(e.target.value)}
                     className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#0b1f3a]"
-                    placeholder="Add follow-up notes…"
+                    placeholder="Add follow-up notes\u2026"
                   />
                   <button
                     type="button"
