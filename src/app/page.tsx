@@ -1,7 +1,21 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Header from "@/components/Header";
+import { supabase } from "@/lib/supabase";
 
 export default function HomePage() {
+  const [signedIn, setSignedIn] = useState(false);
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setSignedIn(!!user);
+      setReady(true);
+    });
+  }, []);
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <Header />
@@ -11,26 +25,48 @@ export default function HomePage() {
           <h1 className="text-3xl font-semibold text-gray-900 tracking-tight">
             HM Alpha Incident Reporting
           </h1>
+          <p className="mt-3 text-sm text-gray-600">
+            For HM Alpha associates to file workplace/guest incident reports.
+          </p>
 
           <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
-            <Link
-              href="/login"
-              className="inline-flex items-center justify-center px-6 py-3 rounded-lg bg-[#0b1f3a] text-white font-medium hover:bg-[#08182e] transition"
-            >
-              Sign In
-            </Link>
-            <Link
-              href="/dashboard"
-              className="inline-flex items-center justify-center px-6 py-3 rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 transition"
-            >
-              Go to Dashboard
-            </Link>
-            <Link
-              href="/help"
-              className="inline-flex items-center justify-center px-6 py-3 rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 transition"
-            >
-              Help
-            </Link>
+            {!ready ? null : signedIn ? (
+              <>
+                <Link
+                  href="/dashboard"
+                  className="inline-flex items-center justify-center px-6 py-3 rounded-lg bg-[#0b1f3a] text-white font-medium hover:bg-[#08182e] transition"
+                >
+                  Dashboard
+                </Link>
+                <Link
+                  href="/new"
+                  className="inline-flex items-center justify-center px-6 py-3 rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 transition"
+                >
+                  New Report
+                </Link>
+                <Link
+                  href="/help"
+                  className="inline-flex items-center justify-center px-6 py-3 rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 transition"
+                >
+                  Help
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  className="inline-flex items-center justify-center px-6 py-3 rounded-lg bg-[#0b1f3a] text-white font-medium hover:bg-[#08182e] transition"
+                >
+                  Sign In
+                </Link>
+                <Link
+                  href="/help"
+                  className="inline-flex items-center justify-center px-6 py-3 rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 transition"
+                >
+                  Help
+                </Link>
+              </>
+            )}
           </div>
 
           <p className="mt-10 text-xs text-gray-400">

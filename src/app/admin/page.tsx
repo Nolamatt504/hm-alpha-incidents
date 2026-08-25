@@ -12,6 +12,7 @@ import {
   isPropertyAdmin,
   canManageUsers,
   UserRole,
+  ROLE_LABELS,
 } from "@/lib/auth";
 import { Hotel } from "@/types/incident";
 
@@ -23,6 +24,12 @@ interface ProfileRow {
   hotel_id: string | null;
   is_active: boolean;
 }
+
+const HOTEL_ADMIN_ROLES: UserRole[] = [
+  "submitter",
+  "property_hr",
+  "property_admin",
+];
 
 function AdminContent() {
   const router = useRouter();
@@ -62,7 +69,11 @@ function AdminContent() {
       } else {
         let list = (profilesRes.data as ProfileRow[]) || [];
         if (isPropertyAdmin(profile) && profile.hotel_id) {
-          list = list.filter((p) => p.hotel_id === profile.hotel_id);
+          list = list.filter(
+            (p) =>
+              p.role !== "corporate_admin" &&
+              (p.hotel_id === profile.hotel_id || p.hotel_id === null)
+          );
         }
         setProfiles(
           list
@@ -94,11 +105,19 @@ function AdminContent() {
 
     if (currentUser && isPropertyAdmin(currentUser)) {
       if (updates.role === "corporate_admin") {
-        setError("Property Admins cannot assign Corporate Admin role.");
+        setError("Hotel Admins cannot assign Corporate Admin role.");
         setSavingId(null);
         return;
       }
-      if (updates.hotel_id && updates.hotel_id !== currentUser.hotel_id) {
+      if (updates.role && !HOTEL_ADMIN_ROLES.includes(updates.role)) {
+        setError("Hotel Admins can only assign Submitter, Property HR, or Hotel Admin.");
+        setSavingId(null);
+        return;
+      }
+      if (
+        updates.hotel_id &&
+        updates.hotel_id !== currentUser.hotel_id
+      ) {
         setError("You can only assign users to your own hotel.");
         setSavingId(null);
         return;
@@ -134,7 +153,7 @@ function AdminContent() {
       isPropertyAdmin(currentUser) &&
       p.role === "corporate_admin"
     ) {
-      setError("Property Admins cannot remove Corporate Admins.");
+      setError("Hotel Admins cannot remove Corporate Admins.");
       return;
     }
 
@@ -148,7 +167,6 @@ function AdminContent() {
     setMessage(null);
     setError(null);
 
-    // Soft-remove: deactivate and clear hotel so they cannot access the system
     const { error: updateError } = await supabase
       .from("profiles")
       .update({
@@ -163,7 +181,6 @@ function AdminContent() {
       return;
     }
 
-    // Remove from the admin list permanently (no restore in UI)
     setProfiles((prev) => prev.filter((x) => x.id !== p.id));
 
     setMessage(
@@ -177,14 +194,98 @@ function AdminContent() {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
-        <div className="flex items-center justify-center py-20 text-gray-500">
-          Loading…
+        <div className="flex items-center justify-center py-20">
+          <div
+            className="h-9 w-9 rounded-full border-2 border-gray-200 border-t-[#0b1f3a] animate-spin"
+            aria-label="Loading"
+          />
         </div>
       </div>
     );
   }
 
   const isCorp = isCorporate(currentUser);
+  const isHotelAdmin = isPropertyAdmin(currentUser);
+  const ownHotel = hotels.find((h) => h.id === currentUser?.hotel_id);
+
+  function RoleSelect({ p }: { p: ProfileRow }) {
+    return (
+      <select
+        value={p.role}
+        disabled={
+          savingId === p.id || p.id === currentUser?.id || !p.is_active
+        }
+        onChange={(e) =>
+          updateProfile(p.id, {
+            role: e.target.value as UserRole,
+          })
+        }
+        className="w-full rounded-lg border border-gray-300 px-2.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#0b1f3a] disabled:opacity-50"
+      >
+        <option value="submitter">{ROLE_LABELS.submitter}</option>
+        <option value="property_hr">{ROLE_LABELS.property_hr}</option>
+        <option value="property_admin">{ROLE_LABELS.property_admin}</option>
+        {isCorp && (
+          <option value="corporate_admin">
+            {ROLE_LABELS.corporate_admin}
+          </option>
+        )}
+      </select>
+    );
+  }
+
+  function HotelSelect({ p }: { p: ProfileRow }) {
+    if (isHotelAdmin) {
+      return (
+        <select
+          value={p.hotel_id || ""}
+          disabled={savingId === p.id || !p.is_active}
+          onChange={(e) =>
+            updateProfile(p.id, {
+              hotel_id: e.target.value || null,
+            })
+          }
+          className="w-full rounded-lg border border-gray-300 px-2.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#0b1f3a] disabled:opacity-50"
+        >
+          <option value="">— Unassigned —</option>
+          {currentUser?.hotel_id && (
+            <option value={currentUser.hotel_id}>
+              {ownHotel?.name || "Your hotel"}
+            </option>
+          )}
+        </select>
+      );
+    }
+
+    return (
+      <>
+        <select
+          value={p.hotel_id || ""}
+          disabled={
+            savingId === p.id ||
+            p.role === "corporate_admin" ||
+            !p.is_active
+          }
+          onChange={(e) =>
+            updateProfile(p.id, {
+              hotel_id: e.target.value || null,
+            })
+          }
+          className="w-full rounded-lg border border-gray-300 px-2.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#0b1f3a] disabled:opacity-50 min-w-[180px]"
+        >
+          <option value="">— No hotel —</option>
+          {hotels.map((h) => (
+            <option key={h.id} value={h.id}>
+              {h.name}
+            </option>
+          ))}
+        </select>
+        {p.role === "corporate_admin" && (
+          <p className="text-xs text-gray-400 mt-1">Sees all hotels</p>
+        )}
+      </>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -196,7 +297,7 @@ function AdminContent() {
           <p className="mt-1 text-sm text-gray-500">
             {isCorp
               ? "Manage all users across every hotel. Assign roles and hotels, or remove accounts when someone leaves."
-              : "Manage users at your property. Assign roles or remove accounts when someone leaves."}
+              : "Manage users at your property and assign unassigned accounts to your hotel. Roles: Submitter, Property HR, or Hotel Admin."}
           </p>
         </div>
 
@@ -211,7 +312,71 @@ function AdminContent() {
           </div>
         )}
 
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+        <div className="space-y-3 sm:hidden">
+          {profiles.length === 0 ? (
+            <div className="bg-white rounded-xl border border-gray-200 p-6 text-center text-gray-500 text-sm">
+              No users found yet.
+              {!isCorp &&
+                " Users appear here after they create an account, including unassigned users you can assign to your hotel."}
+            </div>
+          ) : (
+            profiles.map((p) => (
+              <div
+                key={p.id}
+                className={`bg-white rounded-xl border border-gray-200 p-4 shadow-sm ${
+                  !p.is_active ? "opacity-60" : ""
+                }`}
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-gray-900 truncate">
+                      {p.full_name || "—"}
+                    </p>
+                    <p className="text-xs text-gray-500 truncate">{p.email}</p>
+                    {!p.hotel_id && (
+                      <p className="text-xs text-amber-700 mt-1">Unassigned</p>
+                    )}
+                  </div>
+                  <span
+                    className={`inline-block px-2.5 py-1 rounded-lg text-xs font-medium ${
+                      p.is_active
+                        ? "bg-green-100 text-green-800"
+                        : "bg-red-100 text-red-800"
+                    }`}
+                  >
+                    {p.is_active ? "Active" : "Removed"}
+                  </span>
+                </div>
+                <div className="mt-3 space-y-3">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 mb-1">
+                      Role
+                    </label>
+                    <RoleSelect p={p} />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 mb-1">
+                      Hotel
+                    </label>
+                    <HotelSelect p={p} />
+                  </div>
+                  {p.id !== currentUser?.id && p.is_active && (
+                    <button
+                      type="button"
+                      disabled={savingId === p.id}
+                      onClick={() => removeUser(p)}
+                      className="w-full min-h-11 px-3 py-2 rounded-lg text-sm font-medium text-red-700 bg-red-50 hover:bg-red-100 disabled:opacity-50"
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        <div className="hidden sm:block bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
@@ -222,11 +387,9 @@ function AdminContent() {
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Role
                   </th>
-                  {isCorp && (
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Hotel
-                    </th>
-                  )}
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Hotel
+                  </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Status
                   </th>
@@ -239,12 +402,12 @@ function AdminContent() {
                 {profiles.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={isCorp ? 5 : 4}
+                      colSpan={5}
                       className="px-4 py-8 text-center text-gray-500 text-sm"
                     >
                       No users found yet.
                       {!isCorp &&
-                        " Users appear here after they create an account and are assigned to your hotel."}
+                        " Users appear here after they create an account, including unassigned users you can assign to your hotel."}
                     </td>
                   </tr>
                 ) : (
@@ -260,62 +423,18 @@ function AdminContent() {
                           {p.full_name || "—"}
                         </div>
                         <div className="text-xs text-gray-500">{p.email}</div>
+                        {!p.hotel_id && (
+                          <div className="text-xs text-amber-700 mt-0.5">
+                            Unassigned
+                          </div>
+                        )}
                       </td>
                       <td className="px-4 py-3.5">
-                        <select
-                          value={p.role}
-                          disabled={
-                            savingId === p.id ||
-                            p.id === currentUser?.id ||
-                            !p.is_active
-                          }
-                          onChange={(e) =>
-                            updateProfile(p.id, {
-                              role: e.target.value as UserRole,
-                            })
-                          }
-                          className="rounded-lg border border-gray-300 px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0b1f3a] disabled:opacity-50"
-                        >
-                          <option value="submitter">Submitter</option>
-                          <option value="property_hr">Property HR</option>
-                          <option value="property_admin">Property Admin</option>
-                          {isCorp && (
-                            <option value="corporate_admin">
-                              Corporate Admin
-                            </option>
-                          )}
-                        </select>
+                        <RoleSelect p={p} />
                       </td>
-                      {isCorp && (
-                        <td className="px-4 py-3.5">
-                          <select
-                            value={p.hotel_id || ""}
-                            disabled={
-                              savingId === p.id ||
-                              p.role === "corporate_admin" ||
-                              !p.is_active
-                            }
-                            onChange={(e) =>
-                              updateProfile(p.id, {
-                                hotel_id: e.target.value || null,
-                              })
-                            }
-                            className="rounded-lg border border-gray-300 px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0b1f3a] disabled:opacity-50 min-w-[180px]"
-                          >
-                            <option value="">— No hotel —</option>
-                            {hotels.map((h) => (
-                              <option key={h.id} value={h.id}>
-                                {h.name}
-                              </option>
-                            ))}
-                          </select>
-                          {p.role === "corporate_admin" && (
-                            <p className="text-xs text-gray-400 mt-1">
-                              Sees all hotels
-                            </p>
-                          )}
-                        </td>
-                      )}
+                      <td className="px-4 py-3.5">
+                        <HotelSelect p={p} />
+                      </td>
                       <td className="px-4 py-3.5">
                         <span
                           className={`inline-block px-2.5 py-1 rounded-lg text-xs font-medium ${

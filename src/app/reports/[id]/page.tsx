@@ -11,7 +11,6 @@ import { supabase } from "@/lib/supabase";
 import {
   getCurrentProfile,
   UserProfile,
-  isCorporate,
   canManageReports,
 } from "@/lib/auth";
 import { notifyStakeholders } from "@/lib/notify";
@@ -64,7 +63,7 @@ function ReportDetailContent() {
         return;
       }
 
-      setIncident(data as any);
+      setIncident(data as Incident);
       setInvestigationNotes(data.investigation_notes || "");
 
       const { data: atts } = await supabase
@@ -73,12 +72,14 @@ function ReportDetailContent() {
         .eq("incident_id", id);
 
       if (atts && atts.length > 0) {
-        const withUrls = atts.map((a) => {
-          const { data: urlData } = supabase.storage
-            .from("incident-attachments")
-            .getPublicUrl(a.file_path);
-          return { ...a, publicUrl: urlData?.publicUrl };
-        });
+        const withUrls = await Promise.all(
+          atts.map(async (a) => {
+            const { data: signed } = await supabase.storage
+              .from("incident-attachments")
+              .createSignedUrl(a.file_path, 3600);
+            return { ...a, publicUrl: signed?.signedUrl };
+          })
+        );
         setAttachments(withUrls);
       }
 
@@ -115,7 +116,7 @@ function ReportDetailContent() {
           incidentId: incident.id,
           reportNumber: incident.report_number,
           hotelId: incident.hotel_id,
-          hotelName: (incident as any).hotel?.name,
+          hotelName: incident.hotel?.name,
           incidentType: incident.incident_type,
           severity: incident.severity,
         });
@@ -150,8 +151,11 @@ function ReportDetailContent() {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
-        <div className="flex items-center justify-center py-20 text-gray-500">
-          Loading report…
+        <div className="flex items-center justify-center py-20">
+          <div
+            className="h-9 w-9 rounded-full border-2 border-gray-200 border-t-[#0b1f3a] animate-spin"
+            aria-label="Loading"
+          />
         </div>
       </div>
     );
@@ -206,7 +210,6 @@ function ReportDetailContent() {
           </div>
         )}
 
-        {/* Print letterhead */}
         <div className="print-only mb-6 pb-4 border-b border-gray-300">
           <BrandLogo className="h-10 w-auto mb-2" />
           <p className="text-sm font-semibold text-gray-900">Incident Report</p>
@@ -220,7 +223,7 @@ function ReportDetailContent() {
                 {incident.report_number}
               </h1>
               <p className="text-sm text-gray-500 mt-0.5">
-                {(incident as any).hotel?.name || "—"} ·{" "}
+                {incident.hotel?.name || "—"} ·{" "}
                 {new Date(incident.incident_date_time).toLocaleString()}
               </p>
               <p className="text-sm text-gray-500 mt-1">
@@ -288,14 +291,14 @@ function ReportDetailContent() {
                       ID / Room: {incident.subject_identifier}
                     </p>
                   )}
-                  {(incident as any).subject_phone && (
+                  {incident.subject_phone && (
                     <p className="text-gray-500 text-xs mt-0.5">
-                      Phone: {(incident as any).subject_phone}
+                      Phone: {incident.subject_phone}
                     </p>
                   )}
-                  {(incident as any).subject_email && (
+                  {incident.subject_email && (
                     <p className="text-gray-500 text-xs mt-0.5">
-                      Email: {(incident as any).subject_email}
+                      Email: {incident.subject_email}
                     </p>
                   )}
                 </div>

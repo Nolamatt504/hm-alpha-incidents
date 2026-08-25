@@ -1,10 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import Header from "@/components/Header";
+import IdleTimeout from "@/components/IdleTimeout";
 import { supabase } from "@/lib/supabase";
 import { getCurrentProfile } from "@/lib/auth";
-import IdleTimeout from "@/components/IdleTimeout";
+
+function isInternalPath(path: string): boolean {
+  return path.startsWith("/") && !path.startsWith("//");
+}
 
 export default function RequireAuth({
   children,
@@ -12,6 +17,7 @@ export default function RequireAuth({
   children: React.ReactNode;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [checking, setChecking] = useState(true);
   const [allowed, setAllowed] = useState(false);
 
@@ -22,16 +28,25 @@ export default function RequireAuth({
       } = await supabase.auth.getUser();
 
       if (!user) {
-        router.replace("/login");
+        const next =
+          pathname && isInternalPath(pathname) ? pathname : "/dashboard";
+        router.replace(`/login?next=${encodeURIComponent(next)}`);
         setChecking(false);
         return;
       }
 
       const profile = await getCurrentProfile();
 
-      if (profile && profile.is_active === false) {
+      if (!profile) {
         await supabase.auth.signOut();
-        router.replace("/login");
+        router.replace("/login?reason=noprofile");
+        setChecking(false);
+        return;
+      }
+
+      if (profile.is_active === false) {
+        await supabase.auth.signOut();
+        router.replace("/login?reason=deactivated");
         setChecking(false);
         return;
       }
@@ -41,12 +56,18 @@ export default function RequireAuth({
     }
 
     check();
-  }, [router]);
+  }, [router, pathname]);
 
   if (checking) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <p className="text-gray-500 text-sm">Checking login…</p>
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <div className="flex items-center justify-center py-24">
+          <div
+            className="h-9 w-9 rounded-full border-2 border-gray-200 border-t-[#0b1f3a] animate-spin"
+            aria-label="Loading"
+          />
+        </div>
       </div>
     );
   }

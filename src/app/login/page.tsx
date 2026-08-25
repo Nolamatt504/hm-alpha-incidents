@@ -9,20 +9,42 @@ import { supabase } from "@/lib/supabase";
 
 type Mode = "signin" | "signup" | "forgot";
 
+function isInternalPath(path: string): boolean {
+  return path.startsWith("/") && !path.startsWith("//");
+}
+
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [mode, setMode] = useState<Mode>("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [fullName, setFullName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 
+  const nextPath = (() => {
+    const raw = searchParams.get("next");
+    if (raw && isInternalPath(raw)) return raw;
+    return "/dashboard";
+  })();
+
   useEffect(() => {
-    if (searchParams.get("reason") === "idle") {
-      setMessage("You were signed out after 15 minutes of inactivity. Please sign in again.");
+    const reason = searchParams.get("reason");
+    if (reason === "idle") {
+      setMessage(
+        "You were signed out after 15 minutes of inactivity. Please sign in again."
+      );
+    } else if (reason === "deactivated") {
+      setMessage(
+        "Your account has been deactivated. Contact your Hotel Admin or Corporate Admin if you need access."
+      );
+    } else if (reason === "noprofile") {
+      setMessage(
+        "We could not find a profile for this account. Contact your Hotel Admin or Corporate Admin."
+      );
     }
   }, [searchParams]);
 
@@ -73,9 +95,15 @@ function LoginForm() {
 
         if (signUpError) throw signUpError;
 
+        if (data.session) {
+          router.push(nextPath);
+          router.refresh();
+          return;
+        }
+
         if (data.user) {
           setMessage(
-            "Account created. You can sign in now. After you sign in, a Property Admin or Corporate Admin will assign you to a hotel so you can submit reports."
+            "Account created. You can sign in now. After you sign in, a Hotel Admin or Corporate Admin will assign you to a hotel so you can submit reports."
           );
           setMode("signin");
           setPassword("");
@@ -89,11 +117,11 @@ function LoginForm() {
 
         if (signInError) throw signInError;
 
-        router.push("/dashboard");
+        router.push(nextPath);
         router.refresh();
       }
-    } catch (err: any) {
-      setError(err.message || "Something went wrong");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
       setIsLoading(false);
     }
@@ -174,21 +202,30 @@ function LoginForm() {
                     <button
                       type="button"
                       onClick={() => switchMode("forgot")}
-                      className="text-xs text-[#0b1f3a] hover:underline font-medium"
+                      className="text-xs text-[#0b1f3a] hover:underline font-medium min-h-11 inline-flex items-center px-1"
                     >
                       Forgot password?
                     </button>
                   )}
                 </div>
-                <input
-                  type="password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  minLength={6}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0b1f3a]"
-                  placeholder="••••••••"
-                />
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    minLength={6}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2.5 pr-16 text-sm focus:outline-none focus:ring-2 focus:ring-[#0b1f3a]"
+                    placeholder="••••••••"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((v) => !v)}
+                    className="absolute inset-y-0 right-0 min-h-11 px-3 text-xs font-medium text-[#0b1f3a] hover:underline"
+                  >
+                    {showPassword ? "Hide" : "Show"}
+                  </button>
+                </div>
               </div>
             )}
 
@@ -202,7 +239,7 @@ function LoginForm() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full flex justify-center py-2.5 px-4 rounded-lg bg-[#0b1f3a] text-white text-sm font-medium hover:bg-[#08182e] disabled:opacity-60"
+              className="w-full flex justify-center min-h-11 py-2.5 px-4 rounded-lg bg-[#0b1f3a] text-white text-sm font-medium hover:bg-[#08182e] disabled:opacity-60"
             >
               {isLoading
                 ? "Please wait…"
@@ -221,19 +258,19 @@ function LoginForm() {
                 <button
                   type="button"
                   onClick={() => switchMode("signin")}
-                  className="text-[#0b1f3a] hover:underline font-medium"
+                  className="text-[#0b1f3a] hover:underline font-medium min-h-11 inline-flex items-center px-1"
                 >
                   Sign in
                 </button>
               </p>
             )}
             {mode === "signin" && (
-              <p className="text-gray-600">
+              <p className="text-gray-600 flex flex-wrap items-center justify-center gap-1">
                 Need an account?{" "}
                 <button
                   type="button"
                   onClick={() => switchMode("signup")}
-                  className="text-[#0b1f3a] hover:underline font-medium"
+                  className="text-[#0b1f3a] hover:underline font-medium min-h-11 inline-flex items-center px-1"
                 >
                   Create one
                 </button>
@@ -245,7 +282,7 @@ function LoginForm() {
                 <button
                   type="button"
                   onClick={() => switchMode("signin")}
-                  className="text-[#0b1f3a] hover:underline font-medium"
+                  className="text-[#0b1f3a] hover:underline font-medium min-h-11 inline-flex items-center px-1"
                 >
                   Sign in
                 </button>

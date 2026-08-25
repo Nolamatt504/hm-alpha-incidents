@@ -14,54 +14,28 @@ interface NotifyPayload {
 }
 
 /**
- * Looks up Property Admins for the hotel + all Corporate Admins,
- * then asks the API route to email them.
- * Fails silently so report save is never blocked by email issues.
+ * Asks the API to email Hotel Admins for the hotel plus Corporate Admins.
+ * Recipients are resolved server-side. Fails silently so report save is never blocked.
  */
 export async function notifyStakeholders(payload: NotifyPayload) {
   try {
-    const emails = new Set<string>();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
 
-    // Property admins at this hotel
-    if (payload.hotelId) {
-      const { data: propertyAdmins } = await supabase
-        .from("profiles")
-        .select("email")
-        .eq("role", "property_admin")
-        .eq("hotel_id", payload.hotelId)
-        .eq("is_active", true);
-
-      propertyAdmins?.forEach((p) => {
-        if (p.email) emails.add(p.email);
-      });
-    }
-
-    // All corporate admins
-    const { data: corporate } = await supabase
-      .from("profiles")
-      .select("email")
-      .eq("role", "corporate_admin")
-      .eq("is_active", true);
-
-    corporate?.forEach((p) => {
-      if (p.email) emails.add(p.email);
-    });
-
-    const recipients = Array.from(emails);
-    if (recipients.length === 0) return;
-
-    const origin =
-      typeof window !== "undefined" ? window.location.origin : "";
-    const reportUrl = origin
-      ? `${origin}/reports/${payload.incidentId}`
-      : undefined;
+    if (!session?.access_token) return;
 
     await fetch("/api/notify", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.access_token}`,
+      },
       body: JSON.stringify({
         type: payload.type,
+        incidentId: payload.incidentId,
         reportNumber: payload.reportNumber,
+        hotelId: payload.hotelId,
         hotelName: payload.hotelName,
         incidentType: payload.incidentType
           ? INCIDENT_TYPE_LABELS[
@@ -73,8 +47,7 @@ export async function notifyStakeholders(payload: NotifyPayload) {
               payload.severity as keyof typeof SEVERITY_LABELS
             ] || payload.severity
           : undefined,
-        reportUrl,
-        recipients,
+        reportUrl: `/reports/${payload.incidentId}`,
       }),
     });
   } catch (err) {

@@ -5,25 +5,48 @@ import Link from "next/link";
 import BrandLogo from "@/components/BrandLogo";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { getCurrentProfile, UserProfile, canManageUsers } from "@/lib/auth";
+import {
+  getCurrentProfile,
+  UserProfile,
+  canManageUsers,
+  ROLE_LABELS,
+} from "@/lib/auth";
 import type { User } from "@supabase/supabase-js";
 
 export default function Header() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [hotelName, setHotelName] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    async function loadProfile(nextUser: User | null) {
+      if (!nextUser) {
+        setProfile(null);
+        setHotelName(null);
+        return;
+      }
+      const p = await getCurrentProfile();
+      setProfile(p);
+      if (p?.hotel_id) {
+        const { data } = await supabase
+          .from("hotels")
+          .select("name")
+          .eq("id", p.hotel_id)
+          .single();
+        setHotelName(data?.name ?? null);
+      } else {
+        setHotelName(null);
+      }
+    }
+
     async function load() {
       const {
         data: { user },
       } = await supabase.auth.getUser();
       setUser(user);
-      if (user) {
-        const p = await getCurrentProfile();
-        setProfile(p);
-      }
+      await loadProfile(user);
       setLoading(false);
     }
     load();
@@ -31,13 +54,9 @@ export default function Header() {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        const p = await getCurrentProfile();
-        setProfile(p);
-      } else {
-        setProfile(null);
-      }
+      const nextUser = session?.user ?? null;
+      setUser(nextUser);
+      await loadProfile(nextUser);
     });
 
     return () => subscription.unsubscribe();
@@ -48,6 +67,8 @@ export default function Header() {
     router.push("/login");
     router.refresh();
   }
+
+  const roleLabel = profile ? ROLE_LABELS[profile.role] : null;
 
   return (
     <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
@@ -89,9 +110,21 @@ export default function Header() {
                 </Link>
               )}
               <div className="hidden sm:flex items-center gap-2 ml-2 pl-2 border-l border-gray-200">
-                <span className="text-xs text-gray-500 truncate max-w-[140px]">
-                  {user.email}
-                </span>
+                <div className="text-right leading-tight min-w-0">
+                  {roleLabel && (
+                    <p className="text-xs font-medium text-gray-700 truncate max-w-[160px]">
+                      {roleLabel}
+                    </p>
+                  )}
+                  {hotelName && (
+                    <p className="text-[11px] text-gray-500 truncate max-w-[160px]">
+                      {hotelName}
+                    </p>
+                  )}
+                  <p className="hidden md:block text-[11px] text-gray-400 truncate max-w-[160px]">
+                    {user.email}
+                  </p>
+                </div>
                 <button
                   onClick={handleLogout}
                   className="text-xs text-gray-500 hover:text-red-600 font-medium"
@@ -99,6 +132,11 @@ export default function Header() {
                   Log out
                 </button>
               </div>
+              {roleLabel && (
+                <span className="sm:hidden text-[10px] text-gray-500 max-w-[72px] truncate">
+                  {roleLabel}
+                </span>
+              )}
               <button
                 onClick={handleLogout}
                 className="sm:hidden px-2 py-1.5 text-xs text-gray-500 hover:text-red-600"

@@ -63,7 +63,7 @@ export default function HelpPage() {
               </li>
               <li>Sign in with your email and password.</li>
               <li>
-                A <strong>Property Admin</strong> or <strong>Corporate Admin</strong>{" "}
+                A <strong>Hotel Admin</strong> or <strong>Corporate Admin</strong>{" "}
                 must assign you to a hotel (and a role) before you can submit
                 reports.
               </li>
@@ -77,7 +77,7 @@ export default function HelpPage() {
             </ol>
             <p className="mt-3 text-gray-500">
               If you see a message that your hotel is not assigned yet, contact
-              your Property Admin or Corporate Admin.
+              your Hotel Admin or Corporate Admin.
             </p>
           </section>
 
@@ -113,7 +113,7 @@ export default function HelpPage() {
                   </tr>
                   <tr>
                     <td className="px-4 py-3 font-medium text-gray-900">
-                      Property Admin
+                      Hotel Admin
                     </td>
                     <td className="px-4 py-3">
                       Full access for their hotel: reports, status changes, and
@@ -164,8 +164,8 @@ export default function HelpPage() {
             </ol>
             <p className="mt-3">
               After submit, the report appears on the Dashboard with status{" "}
-              <strong>Submitted</strong>. Property and Corporate Admins may
-              receive an email notification when email is configured.
+              <strong>Submitted</strong>. Hotel and Corporate Admins are notified
+              after you submit.
             </p>
           </section>
 
@@ -214,7 +214,7 @@ export default function HelpPage() {
                 notes.
               </li>
               <li>
-                Property HR, Property Admin, and Corporate Admin can change
+                Property HR, Hotel Admin, and Corporate Admin can change
                 status: Submitted → Under Review → Sent to Corporate → Closed,
                 and add investigation notes.
               </li>
@@ -229,7 +229,7 @@ export default function HelpPage() {
           <section id="admin" className="scroll-mt-20">
             <h2 className="text-lg font-semibold text-gray-900 mb-3">Admin</h2>
             <p>
-              Property Admins and Corporate Admins can open{" "}
+              Hotel Admins and Corporate Admins can open{" "}
               <Link href="/admin" className="text-[#0b1f3a] font-medium hover:underline">
                 Admin
               </Link>{" "}
@@ -243,8 +243,8 @@ export default function HelpPage() {
                 a new account.
               </li>
               <li>
-                Property Admins only manage users at their own hotel. Corporate
-                Admins manage everyone.
+                Hotel Admins manage users at their own hotel and can assign
+                unassigned users to that hotel. Corporate Admins manage everyone.
               </li>
             </ul>
           </section>
@@ -280,12 +280,12 @@ export default function HelpPage() {
             </h2>
             <ul className="list-disc list-inside space-y-2">
               <li>
-                <strong>Hotel assignment or role</strong> — your Property Admin
+                <strong>Hotel assignment or role</strong> — your Hotel Admin
                 or a Corporate Admin.
               </li>
               <li>
                 <strong>How to complete a specific report</strong> — your
-                Property Admin or Property HR.
+                Hotel Admin or Property HR.
               </li>
               <li>
                 <strong>System-wide questions</strong> — Corporate Admin for HM
@@ -312,6 +312,24 @@ export default function HelpPage() {
             className="px-4 py-2 rounded-lg bg-[#0b1f3a] text-white font-medium hover:bg-[#08182e]"
           >
             Sign in
+          </Link>
+          <Link
+            href="/new"
+            className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-50"
+          >
+            New Report
+          </Link>
+          <Link
+            href="/dashboard"
+            className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-50"
+          >
+            Dashboard
+          </Link>
+          <Link
+            href="/admin"
+            className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-50"
+          >
+            Admin
           </Link>
           <Link
             href="/"

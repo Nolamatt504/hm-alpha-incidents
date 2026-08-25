@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, FormEvent, ChangeEvent } from "react";
+import { useState, useEffect, useRef, FormEvent, ChangeEvent } from "react";
 import { useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import {
@@ -13,6 +13,9 @@ import {
 } from "@/types/incident";
 import { getCurrentProfile, UserProfile, isCorporate } from "@/lib/auth";
 import { notifyStakeholders } from "@/lib/notify";
+
+const DRAFT_KEY = "hm-alpha-new-incident-draft";
+const MAX_FILE_BYTES = 10 * 1024 * 1024;
 
 const initialForm: IncidentFormData = {
   hotel_id: "",
@@ -48,6 +51,8 @@ export default function NewIncidentForm() {
   const [isSavingDraft, setIsSavingDraft] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [hydrated, setHydrated] = useState(false);
+  const skipPersistRef = useRef(false);
 
   useEffect(() => {
     async function load() {
@@ -61,22 +66,25 @@ export default function NewIncidentForm() {
         .eq("is_active", true)
         .order("name");
 
+      let nextHotels: Hotel[] = [];
       if (error) {
         console.error("Error loading hotels:", error);
         setErrorMessage("Could not load hotels. Make sure you ran the SQL setup.");
       } else if (data) {
         if (userProfile && !isCorporate(userProfile) && userProfile.hotel_id) {
-          const filtered = data.filter((h: Hotel) => h.id === userProfile.hotel_id);
-          setHotels(filtered);
-          if (filtered.length === 1) {
-            setForm((prev) => ({ ...prev, hotel_id: filtered[0].id }));
+          nextHotels = data.filter((h: Hotel) => h.id === userProfile.hotel_id);
+          setHotels(nextHotels);
+          if (nextHotels.length === 1) {
+            setForm((prev) => ({ ...prev, hotel_id: nextHotels[0].id }));
           }
         } else {
+          nextHotels = data;
           setHotels(data);
         }
       }
-      // Load existing draft if ?draft=id
+
       const qDraft = searchParams.get("draft");
+      let restoredServerDraft = false;
       if (qDraft) {
         const { data: draft } = await supabase
           .from("incidents")
@@ -85,6 +93,7 @@ export default function NewIncidentForm() {
           .eq("status", "draft")
           .single();
         if (draft) {
+          restoredServerDraft = true;
           setDraftId(draft.id);
           setForm({
             hotel_id: draft.hotel_id || "",
@@ -112,10 +121,48 @@ export default function NewIncidentForm() {
         }
       }
 
+      if (!restoredServerDraft) {
+        try {
+          const raw = localStorage.getItem(DRAFT_KEY);
+          if (raw) {
+            const saved = JSON.parse(raw) as Partial<IncidentFormData>;
+            if (saved && typeof saved === "object") {
+              setForm((prev) => {
+                const next = { ...prev, ...saved };
+                if (
+                  userProfile &&
+                  !isCorporate(userProfile) &&
+                  userProfile.hotel_id
+                ) {
+                  next.hotel_id = userProfile.hotel_id;
+                }
+                return next;
+              });
+            }
+          }
+        } catch {
+          // ignore corrupt drafts
+        }
+      }
+
       setIsLoadingHotels(false);
+      setHydrated(true);
     }
     load();
   }, [searchParams]);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    if (skipPersistRef.current) {
+      skipPersistRef.current = false;
+      return;
+    }
+    try {
+      localStorage.setItem(DRAFT_KEY, JSON.stringify(form));
+    } catch {
+      // quota / private mode
+    }
+  }, [form, hydrated]);
 
   function updateField<K extends keyof IncidentFormData>(
     key: K,
@@ -124,15 +171,43 @@ export default function NewIncidentForm() {
     setForm((prev) => ({ ...prev, [key]: value }));
   }
 
+  function addFiles(selected: File[]) {
+    const accepted: File[] = [];
+    const rejected: string[] = [];
+    for (const file of selected) {
+      if (file.size > MAX_FILE_BYTES) {
+        rejected.push(file.name);
+      } else {
+        accepted.push(file);
+      }
+    }
+    if (rejected.length > 0) {
+      setErrorMessage(
+        `These files were skipped because they exceed 10MB: ${rejected.join(", ")}`
+      );
+    }
+    if (accepted.length > 0) {
+      setFiles((prev) => [...prev, ...accepted]);
+    }
+  }
+
   function handleFileChange(e: ChangeEvent<HTMLInputElement>) {
     if (e.target.files) {
-      const selected = Array.from(e.target.files);
-      setFiles((prev) => [...prev, ...selected]);
+      addFiles(Array.from(e.target.files));
+      e.target.value = "";
     }
   }
 
   function removeFile(index: number) {
     setFiles((prev) => prev.filter((_, i) => i !== index));
+  }
+
+  function clearLocalDraft() {
+    try {
+      localStorage.removeItem(DRAFT_KEY);
+    } catch {
+      // ignore
+    }
   }
 
   async function saveIncident(asDraft: boolean) {
@@ -146,9 +221,6 @@ export default function NewIncidentForm() {
     if (!asDraft && (!form.incident_date_time || !form.narrative.trim())) {
       setErrorMessage("Please fill in Hotel, Incident Date & Time, and Narrative before submitting.");
       return;
-    }
-    if (asDraft && !form.incident_date_time) {
-      // allow empty narrative for draft, but need some date - default now
     }
 
     if (asDraft) setIsSavingDraft(true);
@@ -194,7 +266,7 @@ export default function NewIncidentForm() {
       };
 
       let incident: { id: string; report_number: string } | null = null;
-      let writeError: any = null;
+      let writeError: { message?: string } | null = null;
 
       if (draftId) {
         const { data, error } = await supabase
@@ -221,7 +293,7 @@ export default function NewIncidentForm() {
         return;
       }
 
-      // 2. Upload files (if any)
+      let uploadedCount = 0;
       if (files.length > 0) {
         for (const file of files) {
           const fileExt = file.name.split(".").pop();
@@ -233,22 +305,24 @@ export default function NewIncidentForm() {
 
           if (uploadError) {
             console.error("Upload error:", uploadError);
-            // Continue with other files even if one fails
             continue;
           }
 
-          // Save attachment record
-          await supabase.from("incident_attachments").insert({
+          const { error: attError } = await supabase.from("incident_attachments").insert({
             incident_id: incident.id,
             file_name: file.name,
             file_path: fileName,
             file_type: file.type,
           });
+
+          if (attError) {
+            console.error("Attachment record error:", attError);
+            continue;
+          }
+
+          uploadedCount += 1;
         }
       }
-
-      // Upload files only when submitting or always for draft too
-      // (files block already exists above - keep it)
 
       if (!asDraft) {
         const hotelName =
@@ -262,12 +336,31 @@ export default function NewIncidentForm() {
           incidentType: form.incident_type,
           severity: form.severity,
         });
+
+        let fileNote = "";
+        if (files.length > 0) {
+          if (uploadedCount > 0) {
+            fileNote = ` ${uploadedCount} file(s) uploaded.`;
+            if (uploadedCount < files.length) {
+              fileNote += " Some files could not be uploaded.";
+            }
+          } else {
+            fileNote = " Photos/videos could not be uploaded.";
+          }
+        }
+
         setSuccessMessage(
-          `Report ${incident.report_number} submitted successfully.${
-            files.length > 0 ? ` ${files.length} file(s) uploaded.` : ""
-          } You can view it on the Dashboard.`
+          `Report ${incident.report_number} submitted successfully.${fileNote} You can view it on the Dashboard.`
         );
-        setForm(initialForm);
+        skipPersistRef.current = true;
+        clearLocalDraft();
+        setForm({
+          ...initialForm,
+          hotel_id:
+            profile && !isCorporate(profile) && profile.hotel_id
+              ? profile.hotel_id
+              : "",
+        });
         setFiles([]);
         setDraftId(null);
       } else {
@@ -294,7 +387,6 @@ export default function NewIncidentForm() {
     await saveIncident(true);
   }
 
-  // Property users must be assigned to a hotel before submitting
   const needsHotelAssignment =
     profile &&
     !isCorporate(profile) &&
@@ -310,7 +402,7 @@ export default function NewIncidentForm() {
         <div className="rounded-xl border border-amber-200 bg-amber-50 px-5 py-6 text-amber-900">
           <p className="font-medium">Hotel not assigned yet</p>
           <p className="mt-2 text-sm leading-relaxed">
-            Your account is not linked to a hotel. Please contact your Property
+            Your account is not linked to a hotel. Please contact your Hotel
             Admin or Corporate Admin so they can assign you on the Admin page.
             You will be able to submit reports after that.
           </p>
@@ -347,7 +439,6 @@ export default function NewIncidentForm() {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-8">
-        {/* Classification */}
         <section className="bg-white shadow-sm rounded-xl border border-gray-200 p-6 space-y-5">
           <div className="border-b border-gray-100 pb-2">
             <h2 className="text-lg font-medium text-gray-900">1. Classification</h2>
@@ -446,7 +537,6 @@ export default function NewIncidentForm() {
           </div>
         </section>
 
-        {/* People */}
         <section className="bg-white shadow-sm rounded-xl border border-gray-200 p-6 space-y-5">
           <div className="border-b border-gray-100 pb-2">
             <h2 className="text-lg font-medium text-gray-900">2. People involved</h2>
@@ -548,7 +638,6 @@ export default function NewIncidentForm() {
           </div>
         </section>
 
-        {/* What Happened */}
         <section className="bg-white shadow-sm rounded-xl border border-gray-200 p-6 space-y-5">
           <div className="border-b border-gray-100 pb-2">
             <h2 className="text-lg font-medium text-gray-900">3. What happened</h2>
@@ -607,7 +696,6 @@ export default function NewIncidentForm() {
           </div>
         </section>
 
-        {/* Quick Flags */}
         <section className="bg-white shadow-sm rounded-xl border border-gray-200 p-6">
           <div className="border-b border-gray-100 pb-2 mb-4">
             <h2 className="text-lg font-medium text-gray-900">4. Response flags</h2>
@@ -644,49 +732,43 @@ export default function NewIncidentForm() {
           </div>
         </section>
 
-        {/* Photos / Videos */}
         <section className="bg-white shadow-sm rounded-xl border border-gray-200 p-6">
           <div className="border-b border-gray-100 pb-2 mb-4">
             <h2 className="text-lg font-medium text-gray-900">5. Photos &amp; videos</h2>
-            <p className="text-xs text-gray-500 mt-0.5">Optional attachments</p>
+            <p className="text-xs text-gray-500 mt-0.5">Optional. Max 10MB per file.</p>
           </div>
 
           <div className="space-y-4">
-            <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition">
-              <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                <svg
-                  className="w-8 h-8 mb-2 text-gray-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={1.5}
-                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                  />
-                </svg>
-                <p className="text-sm text-gray-500">
-                  <span className="font-medium text-[#0b1f3a]">Click to upload</span> or drag and drop
-                </p>
-                <p className="text-xs text-gray-400 mt-1">Photos or videos (multiple allowed)</p>
-              </div>
-              <input
-                type="file"
-                accept="image/*,video/*"
-                multiple
-                capture="environment"
-                onChange={handleFileChange}
-                className="hidden"
-              />
-            </label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <label className="flex flex-col items-center justify-center min-h-24 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition px-3 py-4">
+                <p className="text-sm font-medium text-[#0b1f3a]">Take photo</p>
+                <p className="text-xs text-gray-400 mt-1">Opens camera</p>
+                <input
+                  type="file"
+                  accept="image/*,video/*"
+                  capture="environment"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+              </label>
+              <label className="flex flex-col items-center justify-center min-h-24 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition px-3 py-4">
+                <p className="text-sm font-medium text-[#0b1f3a]">Photo library</p>
+                <p className="text-xs text-gray-400 mt-1">Choose files (multiple allowed)</p>
+                <input
+                  type="file"
+                  accept="image/*,video/*"
+                  multiple
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+              </label>
+            </div>
 
             {files.length > 0 && (
               <ul className="space-y-2">
                 {files.map((file, index) => (
                   <li
-                    key={index}
+                    key={`${file.name}-${index}`}
                     className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2 text-sm"
                   >
                     <span className="truncate text-gray-700">
@@ -709,12 +791,19 @@ export default function NewIncidentForm() {
           </div>
         </section>
 
-        {/* Actions */}
         <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-2">
           <button
             type="button"
             onClick={() => {
-              setForm(initialForm);
+              skipPersistRef.current = true;
+              clearLocalDraft();
+              setForm({
+                ...initialForm,
+                hotel_id:
+                  profile && !isCorporate(profile) && profile.hotel_id
+                    ? profile.hotel_id
+                    : "",
+              });
               setFiles([]);
               setDraftId(null);
               setSuccessMessage(null);

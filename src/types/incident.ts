@@ -15,7 +15,11 @@ export type IncidentStatus =
   | "sent_to_corporate"
   | "closed";
 
-export type UserRole = "submitter" | "property_hr" | "property_admin" | "corporate_admin";
+export type UserRole =
+  | "submitter"
+  | "property_hr"
+  | "property_admin"
+  | "corporate_admin";
 
 export interface Hotel {
   id: string;
@@ -81,22 +85,3 @@ export const STATUS_LABELS: Record<IncidentStatus, string> = {
   sent_to_corporate: "Sent to Corporate",
   closed: "Closed",
 };
-
-// Hard-coded list for the frontend until Supabase is connected
-export const HOTELS: Hotel[] = [
-  { id: "1", name: "DoubleTree Del Mar", city: "San Diego", state: "CA" },
-  { id: "2", name: "DoubleTree Sunrise", city: "Sunrise", state: "FL" },
-  { id: "3", name: "DoubleTree Raleigh", city: "Raleigh", state: "NC" },
-  { id: "4", name: "DoubleTree Charlotte", city: "Charlotte", state: "NC" },
-  { id: "5", name: "Grand Hyatt Nashville", city: "Nashville", state: "TN" },
-  { id: "6", name: "Hilton Indianapolis", city: "Indianapolis", state: "IN" },
-  { id: "7", name: "Hilton Scottsdale", city: "Scottsdale", state: "AZ" },
-  { id: "8", name: "Hyatt Regency Valencia", city: "Valencia", state: "CA" },
-  { id: "9", name: "Hyatt Regency Westlake", city: "Westlake", state: "CA" },
-  { id: "10", name: "InterContinental New Orleans", city: "New Orleans", state: "LA" },
-  { id: "11", name: "JW Marriott Houston", city: "Houston", state: "TX" },
-  { id: "12", name: "Marriott Del Mar", city: "San Diego", state: "CA" },
-  { id: "13", name: "Union Station Nashville Yards", city: "Nashville", state: "TN" },
-  { id: "14", name: "Westin La Paloma", city: "Tucson", state: "AZ" },
-  { id: "15", name: "Warner Center Marriott", city: "Woodland Hills", state: "CA" },
-];

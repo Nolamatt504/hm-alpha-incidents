@@ -29,14 +29,7 @@ export async function getCurrentProfile(): Promise<UserProfile | null> {
     .single();
 
   if (error || !profile) {
-    return {
-      id: user.id,
-      email: user.email ?? null,
-      full_name: user.user_metadata?.full_name ?? null,
-      role: "submitter",
-      hotel_id: null,
-      is_active: true,
-    };
+    return null;
   }
 
   return {
@@ -57,7 +50,7 @@ export function isPropertyHr(profile: UserProfile | null): boolean {
   return profile?.role === "property_hr";
 }
 
-/** Property Admin or Property HR */
+/** Hotel Admin or Property HR */
 export function isPropertyStaff(profile: UserProfile | null): boolean {
   return isPropertyAdmin(profile) || isPropertyHr(profile);
 }
@@ -77,6 +70,6 @@ export function canManageReports(profile: UserProfile | null): boolean {
 export const ROLE_LABELS: Record<UserRole, string> = {
   submitter: "Submitter",
   property_hr: "Property HR",
-  property_admin: "Property Admin",
+  property_admin: "Hotel Admin",
   corporate_admin: "Corporate Admin",
 };
