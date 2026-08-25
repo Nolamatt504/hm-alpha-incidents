@@ -87,3 +87,43 @@ export const STATUS_LABELS: Record<IncidentStatus, string> = {
   sent_to_corporate: "Sent to Corporate",
   closed: "Closed",
 };
+
+export type IncidentActivityAction =
+  | "created"
+  | "status_change"
+  | "notes"
+  | "archived"
+  | "restored"
+  | "comment";
+
+export interface IncidentActivity {
+  id: string;
+  incident_id: string;
+  actor_id: string | null;
+  actor_name: string | null;
+  action: IncidentActivityAction | string;
+  detail: string | null;
+  created_at: string;
+}
+
+export const ACTIVITY_ACTION_LABELS: Record<string, string> = {
+  created: "Report created",
+  status_change: "Status changed",
+  notes: "Investigation notes",
+  archived: "Archived",
+  restored: "Restored",
+  comment: "Follow-up",
+};
+
+const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+
+/** Open reports (not draft/closed) older than 7 days. */
+export function isAgingIncident(incident: {
+  status: IncidentStatus;
+  created_at: string;
+}): boolean {
+  if (incident.status === "closed" || incident.status === "draft") return false;
+  const created = Date.parse(incident.created_at);
+  if (Number.isNaN(created)) return false;
+  return Date.now() - created > SEVEN_DAYS_MS;
+}

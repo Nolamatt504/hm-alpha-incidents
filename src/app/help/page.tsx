@@ -7,6 +7,7 @@ const sections = [
   { id: "file-report", label: "Filing a report" },
   { id: "drafts", label: "Drafts" },
   { id: "reviewing", label: "Reviewing reports" },
+  { id: "overview-archives", label: "Overview & Archives" },
   { id: "admin", label: "Admin" },
   { id: "password", label: "Password reset" },
   { id: "contact", label: "Who to contact" },
@@ -24,11 +25,10 @@ export default function HelpPage() {
           </h1>
           <p className="mt-2 text-sm text-gray-600">
             How to use the HM Alpha Incident Reporting system across all
-            properties.
+            properties. Reports are confidential.
           </p>
         </div>
 
-        {/* On this page */}
         <nav className="mb-10 rounded-xl border border-gray-200 bg-white p-4 sm:p-5">
           <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-3">
             On this page
@@ -48,7 +48,6 @@ export default function HelpPage() {
         </nav>
 
         <div className="space-y-10 text-sm text-gray-700 leading-relaxed">
-          {/* Getting started */}
           <section id="getting-started" className="scroll-mt-20">
             <h2 className="text-lg font-semibold text-gray-900 mb-3">
               Getting started
@@ -72,7 +71,7 @@ export default function HelpPage() {
                 <Link href="/new" className="text-[#0b1f3a] font-medium hover:underline">
                   New Report
                 </Link>{" "}
-                to file an incident.
+                to file an incident — typically about a minute on a phone.
               </li>
             </ol>
             <p className="mt-3 text-gray-500">
@@ -81,7 +80,6 @@ export default function HelpPage() {
             </p>
           </section>
 
-          {/* Roles */}
           <section id="roles" className="scroll-mt-20">
             <h2 className="text-lg font-semibold text-gray-900 mb-3">Roles</h2>
             <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white">
@@ -99,7 +97,8 @@ export default function HelpPage() {
                     </td>
                     <td className="px-4 py-3">
                       Create and submit reports for their assigned hotel. View
-                      reports for that hotel.
+                      reports for that hotel only. Cannot change status, add
+                      follow-ups, or manage users.
                     </td>
                   </tr>
                   <tr>
@@ -107,8 +106,8 @@ export default function HelpPage() {
                       Property HR
                     </td>
                     <td className="px-4 py-3">
-                      Same hotel view as above, plus update investigation notes
-                      and change report status. Cannot manage users.
+                      Same hotel-scoped view, plus investigation notes, status
+                      changes, and follow-up comments. Cannot manage users.
                     </td>
                   </tr>
                   <tr>
@@ -116,8 +115,10 @@ export default function HelpPage() {
                       Hotel Admin
                     </td>
                     <td className="px-4 py-3">
-                      Full access for their hotel: reports, status changes, and
-                      managing users at that property (roles, remove users).
+                      Full access for their hotel: reports, status, notes,
+                      follow-ups, and managing users at that property. The
+                      on-screen label is always <strong>Hotel Admin</strong>{" "}
+                      (not Property Admin).
                     </td>
                   </tr>
                   <tr>
@@ -125,7 +126,15 @@ export default function HelpPage() {
                       Corporate Admin
                     </td>
                     <td className="px-4 py-3">
-                      See all hotels, manage all users, and update any report.
+                      See every hotel. Portfolio{" "}
+                      <Link href="/overview" className="text-[#0b1f3a] font-medium hover:underline">
+                        Overview
+                      </Link>
+                      , search across properties,{" "}
+                      <Link href="/archives" className="text-[#0b1f3a] font-medium hover:underline">
+                        Archives
+                      </Link>
+                      , and manage all users and reports.
                     </td>
                   </tr>
                 </tbody>
@@ -133,11 +142,21 @@ export default function HelpPage() {
             </div>
           </section>
 
-          {/* Filing a report */}
           <section id="file-report" className="scroll-mt-20">
             <h2 className="text-lg font-semibold text-gray-900 mb-3">
               Filing a report
             </h2>
+            <div className="mb-4 rounded-lg border border-[#0b1f3a]/20 bg-slate-50 px-4 py-3">
+              <p className="font-medium text-gray-900">
+                What staff did matters more than a long story of what happened.
+              </p>
+              <p className="mt-1 text-gray-600">
+                Insurance and claims teams look first at the response: first
+                aid, area secured, photos, EMS called, medical attention
+                offered or refused, and who was notified. Write that while it
+                is fresh. The report is a confidential contemporaneous record.
+              </p>
+            </div>
             <ol className="list-decimal list-inside space-y-2">
               <li>
                 Open{" "}
@@ -150,13 +169,13 @@ export default function HelpPage() {
                 Choose the hotel (property users are limited to their hotel).
               </li>
               <li>
-                Fill in type, severity, date/time, location, people involved, and
-                the narrative. Fields marked required must be completed before
-                submit.
+                Fill in type, severity, date/time, location, people involved,
+                and the narrative.
               </li>
               <li>
-                Optionally attach photos or videos and note EMS, medical refusal,
-                or police involvement.
+                Complete <strong>What staff did</strong> — the response field.
+                Attach photos. Mark EMS, medical refusal, or police if
+                applicable.
               </li>
               <li>
                 Click <strong>Submit Report</strong> when the report is ready.
@@ -164,17 +183,18 @@ export default function HelpPage() {
             </ol>
             <p className="mt-3">
               After submit, the report appears on the Dashboard with status{" "}
-              <strong>Submitted</strong>. Hotel and Corporate Admins are notified
-              after you submit.
+              <strong>Submitted</strong>. Hotel Admin and Corporate Admin are
+              notified. An activity log records who created it and later
+              changes.
             </p>
           </section>
 
-          {/* Drafts */}
           <section id="drafts" className="scroll-mt-20">
             <h2 className="text-lg font-semibold text-gray-900 mb-3">Drafts</h2>
             <p>
               Use <strong>Save Draft</strong> if you need to pause before
-              submitting (for example, waiting on details or photos).
+              submitting (for example, waiting on details or photos). The form
+              also autosaves locally as you type.
             </p>
             <ul className="list-disc list-inside mt-2 space-y-1">
               <li>Hotel is required to save a draft.</li>
@@ -192,7 +212,6 @@ export default function HelpPage() {
             </ul>
           </section>
 
-          {/* Reviewing */}
           <section id="reviewing" className="scroll-mt-20">
             <h2 className="text-lg font-semibold text-gray-900 mb-3">
               Reviewing reports
@@ -200,32 +219,67 @@ export default function HelpPage() {
             <ul className="list-disc list-inside space-y-2">
               <li>
                 <strong>Dashboard</strong> lists reports you are allowed to see
-                (your hotel, or all hotels for Corporate).
+                (your hotel, or all hotels for Corporate). Archived reports are
+                hidden from this live list.
               </li>
               <li>
-                Use filters for status, type, hotel (Corporate), and date range.
+                Search by report number, subject, location, submitted by,
+                narrative, or hotel name. Hotel staff search only their hotel;
+                Corporate searches the whole portfolio.
               </li>
               <li>
-                <strong>Export CSV</strong> downloads the filtered list for
-                Excel.
+                Filters still work for status, type, hotel (Corporate), and
+                date range.
               </li>
               <li>
-                Click <strong>View</strong> to open the full report, photos, and
-                notes.
+                An <strong>Aging</strong> badge appears on reports that have
+                been open more than 7 days (not draft or closed).
+              </li>
+              <li>
+                Click <strong>View</strong> for the full report, signed photos,
+                investigation notes, and the activity / follow-up timeline.
               </li>
               <li>
                 Property HR, Hotel Admin, and Corporate Admin can change
                 status: Submitted → Under Review → Sent to Corporate → Closed,
-                and add investigation notes.
+                add investigation notes, and leave follow-up comments.
               </li>
               <li>
-                Use <strong>Print / Save as PDF</strong> on a report to print or
-                save a copy.
+                Use <strong>Print / Save as PDF</strong> on a report. The
+                confidential banner prints with it.
               </li>
             </ul>
           </section>
 
-          {/* Admin */}
+          <section id="overview-archives" className="scroll-mt-20">
+            <h2 className="text-lg font-semibold text-gray-900 mb-3">
+              Overview &amp; Archives
+            </h2>
+            <p className="mb-2">
+              These pages are for <strong>Corporate Admin</strong> only. Other
+              roles are sent back to the Dashboard.
+            </p>
+            <ul className="list-disc list-inside space-y-2">
+              <li>
+                <Link href="/overview" className="text-[#0b1f3a] font-medium hover:underline">
+                  Overview
+                </Link>{" "}
+                is the portfolio snapshot: open vs closed vs aging by hotel,
+                severity mix, type mix, and reports still open after 7 days.
+                Hotel names link into the Dashboard with that hotel filtered.
+              </li>
+              <li>
+                <Link href="/archives" className="text-[#0b1f3a] font-medium hover:underline">
+                  Archives
+                </Link>{" "}
+                holds closed reports that Corporate has removed from hotel
+                dashboards. Restore puts them back on the live list. The
+                Archives button in the header uses a navy outline so it is easy
+                to find on a phone.
+              </li>
+            </ul>
+          </section>
+
           <section id="admin" className="scroll-mt-20">
             <h2 className="text-lg font-semibold text-gray-900 mb-3">Admin</h2>
             <p>
@@ -249,7 +303,6 @@ export default function HelpPage() {
             </ul>
           </section>
 
-          {/* Password */}
           <section id="password" className="scroll-mt-20">
             <h2 className="text-lg font-semibold text-gray-900 mb-3">
               Password reset
@@ -273,7 +326,6 @@ export default function HelpPage() {
             </p>
           </section>
 
-          {/* Contact */}
           <section id="contact" className="scroll-mt-20">
             <h2 className="text-lg font-semibold text-gray-900 mb-3">
               Who to contact
@@ -324,6 +376,18 @@ export default function HelpPage() {
             className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-50"
           >
             Dashboard
+          </Link>
+          <Link
+            href="/overview"
+            className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-50"
+          >
+            Overview
+          </Link>
+          <Link
+            href="/archives"
+            className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-50"
+          >
+            Archives
           </Link>
           <Link
             href="/admin"

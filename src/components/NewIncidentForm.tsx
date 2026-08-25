@@ -253,7 +253,7 @@ export default function NewIncidentForm() {
         subject_email: form.subject_email || null,
         witness_name: form.witness_name || null,
         witness_contact: form.witness_contact || null,
-        narrative: form.narrative || (asDraft ? "(Draft — incomplete)" : ""),
+        narrative: form.narrative || (asDraft ? "(Draft \u2014 incomplete)" : ""),
         actions_taken: form.actions_taken || null,
         contributing_factors: form.contributing_factors || null,
         miscellaneous: form.miscellaneous || null,
@@ -366,7 +366,7 @@ export default function NewIncidentForm() {
       } else {
         setDraftId(incident.id);
         setSuccessMessage(
-          `Draft ${incident.report_number} saved. Open Dashboard → Drafts → Continue when you are ready to finish.`
+          `Draft ${incident.report_number} saved. Open Dashboard \u2192 Drafts \u2192 Continue when you are ready to finish.`
         );
       }
     } catch (err) {
@@ -421,13 +421,18 @@ export default function NewIncidentForm() {
           Fields marked with <span className="text-red-600 font-medium">*</span> are required to submit.
           You can <strong>Save Draft</strong> anytime and finish later.
         </p>
+        <p className="mt-3 text-xs text-amber-900 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+          Confidential record. Only staff at this hotel and Corporate Admin can
+          see submitted reports. Document what happened <strong>and</strong> what
+          staff did while it is fresh \u2014 claims teams rely on the response.
+        </p>
       </div>
 
       {successMessage && (
         <div className="mb-6 rounded-lg bg-green-50 border border-green-200 px-4 py-3 text-green-800 text-sm leading-relaxed">
           <p>{successMessage}</p>
           <a href="/dashboard" className="inline-block mt-2 font-medium text-[#0b1f3a] hover:underline">
-            Go to Dashboard →
+            Go to Dashboard \u2192
           </a>
         </div>
       )}
@@ -457,7 +462,7 @@ export default function NewIncidentForm() {
               className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0b1f3a] focus:border-transparent disabled:bg-gray-100"
             >
               <option value="">
-                {isLoadingHotels ? "Loading hotels…" : "Select hotel…"}
+                {isLoadingHotels ? "Loading hotels\u2026" : "Select hotel\u2026"}
               </option>
               {hotels.map((h) => (
                 <option key={h.id} value={h.id}>
@@ -653,19 +658,7 @@ export default function NewIncidentForm() {
               rows={5}
               value={form.narrative}
               onChange={(e) => updateField("narrative", e.target.value)}
-              placeholder="Describe what occurred…"
-              className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0b1f3a]"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Immediate Actions Taken
-            </label>
-            <textarea
-              rows={3}
-              value={form.actions_taken}
-              onChange={(e) => updateField("actions_taken", e.target.value)}
+              placeholder="Describe what occurred\u2026"
               className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0b1f3a]"
             />
           </div>
@@ -690,7 +683,32 @@ export default function NewIncidentForm() {
               rows={2}
               value={form.miscellaneous}
               onChange={(e) => updateField("miscellaneous", e.target.value)}
-              placeholder="Anything else worth noting…"
+              placeholder="Anything else worth noting\u2026"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0b1f3a]"
+            />
+          </div>
+        </section>
+
+        <section className="bg-white shadow-sm rounded-xl border-2 border-[#0b1f3a] p-6 space-y-3">
+          <div className="border-b border-gray-100 pb-2">
+            <h2 className="text-lg font-medium text-gray-900">
+              4. What staff did
+            </h2>
+            <p className="text-xs text-gray-600 mt-0.5">
+              The most important field for insurance. Write the response: first
+              aid, area secured, photos taken, EMS called, medical refused, who
+              was notified. Document contemporaneously.
+            </p>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-800 mb-1">
+              Immediate actions taken
+            </label>
+            <textarea
+              rows={5}
+              value={form.actions_taken}
+              onChange={(e) => updateField("actions_taken", e.target.value)}
+              placeholder="e.g. Guest seated, ice provided, photos of wet floor, manager notified, medical attention offered and refused\u2026"
               className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0b1f3a]"
             />
           </div>
@@ -698,8 +716,8 @@ export default function NewIncidentForm() {
 
         <section className="bg-white shadow-sm rounded-xl border border-gray-200 p-6">
           <div className="border-b border-gray-100 pb-2 mb-4">
-            <h2 className="text-lg font-medium text-gray-900">4. Response flags</h2>
-            <p className="text-xs text-gray-500 mt-0.5">EMS, medical refusal, police</p>
+            <h2 className="text-lg font-medium text-gray-900">5. Response flags</h2>
+            <p className="text-xs text-gray-500 mt-0.5">EMS, medical refusal, and police \u2014 also important for claims</p>
           </div>
           <div className="flex flex-wrap gap-6">
             <label className="inline-flex items-center gap-2 cursor-pointer">
@@ -734,7 +752,7 @@ export default function NewIncidentForm() {
 
         <section className="bg-white shadow-sm rounded-xl border border-gray-200 p-6">
           <div className="border-b border-gray-100 pb-2 mb-4">
-            <h2 className="text-lg font-medium text-gray-900">5. Photos &amp; videos</h2>
+            <h2 className="text-lg font-medium text-gray-900">6. Photos &amp; videos</h2>
             <p className="text-xs text-gray-500 mt-0.5">Optional. Max 10MB per file.</p>
           </div>
 
@@ -819,14 +837,14 @@ export default function NewIncidentForm() {
             disabled={isSubmitting || isSavingDraft || isLoadingHotels}
             className="w-full sm:w-auto px-5 py-3 sm:py-2.5 rounded-lg border border-gray-300 bg-white text-sm font-medium text-gray-800 hover:bg-gray-50 disabled:opacity-60"
           >
-            {isSavingDraft ? "Saving draft…" : "Save Draft"}
+            {isSavingDraft ? "Saving draft\u2026" : "Save Draft"}
           </button>
           <button
             type="submit"
             disabled={isSubmitting || isSavingDraft || isLoadingHotels}
             className="w-full sm:w-auto px-6 py-3 sm:py-2.5 rounded-lg bg-[#0b1f3a] text-white text-sm font-medium hover:bg-[#08182e] disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            {isSubmitting ? "Submitting…" : "Submit Report"}
+            {isSubmitting ? "Submitting\u2026" : "Submit Report"}
           </button>
         </div>
       </form>
