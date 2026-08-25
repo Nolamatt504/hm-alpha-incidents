@@ -30,6 +30,9 @@ function DashboardContent() {
   const [filterFrom, setFilterFrom] = useState("");
   const [filterTo, setFilterTo] = useState("");
 
+  const needsHotel =
+    !!profile && !isCorporate(profile) && !profile.hotel_id;
+
   useEffect(() => {
     async function load() {
       setIsLoading(true);
@@ -38,12 +41,25 @@ function DashboardContent() {
       const userProfile = await getCurrentProfile();
       setProfile(userProfile);
 
+      if (!userProfile) {
+        setIncidents([]);
+        setIsLoading(false);
+        return;
+      }
+
+      if (!isCorporate(userProfile) && !userProfile.hotel_id) {
+        setIncidents([]);
+        setHotels([]);
+        setIsLoading(false);
+        return;
+      }
+
       let query = supabase
         .from("incidents")
         .select(`*, hotel:hotels ( id, name, city, state )`)
         .order("created_at", { ascending: false });
 
-      if (userProfile && !isCorporate(userProfile) && userProfile.hotel_id) {
+      if (!isCorporate(userProfile) && userProfile.hotel_id) {
         query = query.eq("hotel_id", userProfile.hotel_id);
       }
 
@@ -59,7 +75,7 @@ function DashboardContent() {
       if (incRes.error) {
         setError("Could not load reports. " + incRes.error.message);
       } else {
-        setIncidents((incRes.data as any) || []);
+        setIncidents((incRes.data as Incident[]) || []);
       }
 
       if (hotelsRes.data) setHotels(hotelsRes.data);
@@ -119,7 +135,7 @@ function DashboardContent() {
     ];
     const rows = filtered.map((i) => [
       i.report_number,
-      (i as any).hotel?.name || "",
+      i.hotel?.name || "",
       INCIDENT_TYPE_LABELS[i.incident_type],
       SEVERITY_LABELS[i.severity],
       STATUS_LABELS[i.status],
@@ -189,6 +205,8 @@ function DashboardContent() {
             <p className="mt-1 text-sm text-gray-500">
               {isLoading
                 ? "Loading…"
+                : needsHotel
+                ? "Hotel not assigned"
                 : isCorporate(profile)
                 ? `All properties · ${filtered.length} shown`
                 : `Your property · ${filtered.length} shown`}
@@ -198,7 +216,7 @@ function DashboardContent() {
             <button
               type="button"
               onClick={exportCSV}
-              disabled={filtered.length === 0}
+              disabled={filtered.length === 0 || needsHotel}
               className="inline-flex items-center justify-center px-4 py-2.5 rounded-lg border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
             >
               Export CSV
@@ -218,7 +236,17 @@ function DashboardContent() {
           </div>
         )}
 
-        {/* Filters */}
+        {needsHotel && !isLoading ? (
+          <div className="bg-white rounded-xl border border-amber-200 p-10 sm:p-12 text-center shadow-sm">
+            <p className="font-medium text-gray-900">Hotel not assigned yet</p>
+            <p className="mt-2 text-sm text-gray-500 max-w-md mx-auto">
+              Your account is not linked to a hotel, so reports are not shown
+              here. Contact your Hotel Admin or Corporate Admin so they can
+              assign you on the Admin page.
+            </p>
+          </div>
+        ) : (
+          <>
         <div className="bg-white rounded-xl border border-gray-200 p-4 mb-6 shadow-sm">
           <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-3">
             Filters
@@ -313,7 +341,6 @@ function DashboardContent() {
           )}
         </div>
 
-        {/* Summary */}
         {!isLoading && (
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
             {[
@@ -395,7 +422,6 @@ function DashboardContent() {
           </div>
         ) : (
           <div className="space-y-6">
-            {/* Drafts */}
             {drafts.length > 0 && (
               <section>
                 <h2 className="text-sm font-semibold text-gray-900 mb-3">
@@ -413,7 +439,7 @@ function DashboardContent() {
                             {incident.report_number}
                           </p>
                           <p className="text-xs text-gray-500 mt-0.5">
-                            {(incident as any).hotel?.name || "—"}
+                            {incident.hotel?.name || "—"}
                           </p>
                         </div>
                         <StatusBadge status={incident.status} />
@@ -458,7 +484,7 @@ function DashboardContent() {
                             {incident.report_number}
                           </td>
                           <td className="px-4 py-3 text-sm text-gray-700">
-                            {(incident as any).hotel?.name || "—"}
+                            {incident.hotel?.name || "—"}
                           </td>
                           <td className="px-4 py-3 text-sm text-gray-700">
                             {INCIDENT_TYPE_LABELS[incident.incident_type]}
@@ -479,13 +505,11 @@ function DashboardContent() {
               </section>
             )}
 
-            {/* Active reports */}
             <section>
               <h2 className="text-sm font-semibold text-gray-900 mb-3">
                 Reports ({activeReports.length})
               </h2>
 
-              {/* Mobile cards */}
               <div className="space-y-3 sm:hidden">
                 {activeReports.length === 0 ? (
                   <div className="bg-white rounded-xl border border-gray-200 p-6 text-center text-sm text-gray-500">
@@ -503,7 +527,7 @@ function DashboardContent() {
                             {incident.report_number}
                           </p>
                           <p className="text-xs text-gray-500 mt-0.5 truncate">
-                            {(incident as any).hotel?.name || "—"}
+                            {incident.hotel?.name || "—"}
                           </p>
                         </div>
                         <StatusBadge status={incident.status} />
@@ -528,7 +552,6 @@ function DashboardContent() {
                 )}
               </div>
 
-              {/* Desktop table — fewer columns than before on purpose */}
               <div className="hidden sm:block bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
                 {activeReports.length === 0 ? (
                   <div className="p-8 text-center text-sm text-gray-500">
@@ -572,7 +595,7 @@ function DashboardContent() {
                               {incident.report_number}
                             </td>
                             <td className="px-4 py-3.5 whitespace-nowrap text-sm text-gray-700">
-                              {(incident as any).hotel?.name || "—"}
+                              {incident.hotel?.name || "—"}
                             </td>
                             <td className="px-4 py-3.5 whitespace-nowrap text-sm text-gray-700 hidden lg:table-cell">
                               {incident.reported_by_name || "—"}
@@ -603,6 +626,8 @@ function DashboardContent() {
               </div>
             </section>
           </div>
+        )}
+          </>
         )}
       </main>
     </div>
