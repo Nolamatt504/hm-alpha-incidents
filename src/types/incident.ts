@@ -61,6 +61,8 @@ export interface Incident extends IncidentFormData {
   created_at: string;
   updated_at: string;
   hotel?: Hotel;
+  archived_at?: string | null;
+  archived_by?: string | null;
 }
 
 export const INCIDENT_TYPE_LABELS: Record<IncidentType, string> = {
