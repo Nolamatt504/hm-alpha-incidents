@@ -125,8 +125,9 @@ function OverviewContent() {
               Portfolio overview
             </h1>
             <p className="mt-1 text-sm text-gray-500">
-              Corporate only. Live (non-archived) reports across all properties.
-              Aging means still open more than 7 days.
+              Corporate only. Reports Hotel Admin has sent up (non-archived).
+              Hotel-only reports stay at the property until then. Aging means
+              still open more than 7 days.
             </p>
           </div>
           <div className="flex gap-2">
@@ -154,6 +155,17 @@ function OverviewContent() {
         {isLoading ? (
           <div className="bg-white rounded-xl border border-gray-200 p-12 text-center text-gray-500 shadow-sm">
             Loading overview…
+          </div>
+        ) : live.length === 0 ? (
+          <div className="bg-white rounded-xl border border-gray-200 p-10 sm:p-12 text-center shadow-sm">
+            <p className="font-medium text-gray-900">
+              No reports sent to corporate yet
+            </p>
+            <p className="mt-2 text-sm text-gray-500 max-w-md mx-auto">
+              Reports appear here after Hotel Admin clicks Sent to Corporate.
+              Until then they stay with the submitter, Property HR, and Hotel
+              Admin at that hotel.
+            </p>
           </div>
         ) : (
           <>
