@@ -57,6 +57,7 @@ function DashboardContent() {
       let query = supabase
         .from("incidents")
         .select(`*, hotel:hotels ( id, name, city, state )`)
+        .is("archived_at", null)
         .order("created_at", { ascending: false });
 
       if (!isCorporate(userProfile) && userProfile.hotel_id) {
@@ -221,6 +222,14 @@ function DashboardContent() {
             >
               Export CSV
             </button>
+            {isCorporate(profile) && (
+              <Link
+                href="/archives"
+                className="inline-flex items-center justify-center px-4 py-2.5 rounded-lg border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50"
+              >
+                Archives
+              </Link>
+            )}
             <Link
               href="/new"
               className="inline-flex items-center justify-center px-4 py-2.5 rounded-lg bg-[#0b1f3a] text-white text-sm font-medium hover:bg-[#08182e]"

@@ -12,6 +12,7 @@ import {
   getCurrentProfile,
   UserProfile,
   canManageReports,
+  isCorporate,
 } from "@/lib/auth";
 import { notifyStakeholders } from "@/lib/notify";
 import {
@@ -147,6 +148,62 @@ function ReportDetailContent() {
     setSaving(false);
   }
 
+  async function archiveReport() {
+    if (!incident || !profile) return;
+    setSaving(true);
+    setMessage(null);
+    const now = new Date().toISOString();
+    const { error: updateError } = await supabase
+      .from("incidents")
+      .update({
+        archived_at: now,
+        archived_by: profile.id,
+        updated_at: now,
+      })
+      .eq("id", incident.id);
+
+    if (updateError) {
+      setMessage("Error: " + updateError.message);
+    } else {
+      setIncident({
+        ...incident,
+        archived_at: now,
+        archived_by: profile.id,
+      });
+      setMessage("Report archived");
+      setTimeout(() => setMessage(null), 2500);
+    }
+    setSaving(false);
+  }
+
+  async function restoreReport() {
+    if (!incident) return;
+    setSaving(true);
+    setMessage(null);
+    const now = new Date().toISOString();
+    const { error: updateError } = await supabase
+      .from("incidents")
+      .update({
+        archived_at: null,
+        archived_by: null,
+        updated_at: now,
+      })
+      .eq("id", incident.id);
+
+    if (updateError) {
+      setMessage("Error: " + updateError.message);
+    } else {
+      setIncident({
+        ...incident,
+        archived_at: null,
+        archived_by: null,
+      });
+      setMessage("Report restored");
+      setTimeout(() => setMessage(null), 2500);
+    }
+    setSaving(false);
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -175,7 +232,8 @@ function ReportDetailContent() {
     );
   }
 
-  const canEdit = canManageReports(profile);
+  const archived = !!incident.archived_at;
+  const canEdit = canManageReports(profile) && !incident.archived_at;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -184,19 +242,40 @@ function ReportDetailContent() {
       <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-6 flex items-center justify-between">
           <Link
-            href="/dashboard"
+            href={archived && isCorporate(profile) ? "/archives" : "/dashboard"}
             className="text-sm text-[#0b1f3a] hover:text-[#08182e] font-medium"
           >
-            ← Back to Dashboard
+            {archived && isCorporate(profile)
+              ? "\u2190 Back to Archives"
+              : "\u2190 Back to Dashboard"}
           </Link>
-          <button
-            type="button"
-            onClick={() => window.print()}
-            className="px-3 py-1.5 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 print:hidden"
-          >
-            Print / Save as PDF
-          </button>
+          <div className="flex items-center gap-2 print:hidden">
+            {isCorporate(profile) && incident.status !== "draft" && (
+              <button
+                type="button"
+                disabled={saving}
+                onClick={archived ? restoreReport : archiveReport}
+                className="px-3 py-1.5 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+              >
+                {archived ? "Restore to dashboard" : "Archive this report"}
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => window.print()}
+              className="px-3 py-1.5 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
+              Print / Save as PDF
+            </button>
+          </div>
         </div>
+
+        {archived && (
+          <div className="mb-4 rounded-lg bg-amber-50 border border-amber-200 px-4 py-3 text-amber-900 text-sm print:hidden">
+            This report is archived and hidden from hotel dashboards. Corporate
+            can restore it.
+          </div>
+        )}
 
         {message && (
           <div
