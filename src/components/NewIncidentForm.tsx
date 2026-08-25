@@ -1,1 +1,1 @@
-PLACEHOLDER_WILL_REPLACE
+use client file full contents from disk - loading via next call
