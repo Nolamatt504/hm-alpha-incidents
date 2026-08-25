@@ -15,6 +15,7 @@ import {
   SEVERITY_LABELS,
   STATUS_LABELS,
   Hotel,
+  isAgingIncident,
 } from "@/types/incident";
 
 function DashboardContent() {
@@ -29,9 +30,15 @@ function DashboardContent() {
   const [filterHotel, setFilterHotel] = useState<string>("");
   const [filterFrom, setFilterFrom] = useState("");
   const [filterTo, setFilterTo] = useState("");
+  const [search, setSearch] = useState("");
 
   const needsHotel =
     !!profile && !isCorporate(profile) && !profile.hotel_id;
+
+  useEffect(() => {
+    const hotel = new URLSearchParams(window.location.search).get("hotel");
+    if (hotel) setFilterHotel(hotel);
+  }, []);
 
   useEffect(() => {
     async function load() {
@@ -87,6 +94,7 @@ function DashboardContent() {
   }, []);
 
   const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
     return incidents.filter((i) => {
       if (filterStatus && i.status !== filterStatus) return false;
       if (filterType && i.incident_type !== filterType) return false;
@@ -101,6 +109,20 @@ function DashboardContent() {
         to.setHours(23, 59, 59, 999);
         if (d > to) return false;
       }
+      if (q) {
+        const hay = [
+          i.report_number,
+          i.subject_name,
+          i.location_detail,
+          i.reported_by_name,
+          i.narrative,
+          i.hotel?.name,
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
       return true;
     });
   }, [
@@ -110,6 +132,7 @@ function DashboardContent() {
     filterHotel,
     filterFrom,
     filterTo,
+    search,
   ]);
 
   const drafts = useMemo(
@@ -167,10 +190,20 @@ function DashboardContent() {
     setFilterHotel("");
     setFilterFrom("");
     setFilterTo("");
+    setSearch("");
   }
 
   const hasFilters =
-    filterStatus || filterType || filterHotel || filterFrom || filterTo;
+    filterStatus || filterType || filterHotel || filterFrom || filterTo || search.trim();
+
+  function AgingBadge({ incident }: { incident: Incident }) {
+    if (!isAgingIncident(incident)) return null;
+    return (
+      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-orange-50 text-orange-800 ring-1 ring-inset ring-orange-200">
+        Aging
+      </span>
+    );
+  }
 
   function ReportActions({ incident }: { incident: Incident }) {
     if (incident.status === "draft") {
@@ -260,6 +293,18 @@ function DashboardContent() {
           <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-3">
             Filters
           </p>
+          <div className="mb-3">
+            <label className="block text-xs font-medium text-gray-500 mb-1">
+              Search
+            </label>
+            <input
+              type="search"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Report #, subject, location, submitted by, narrative, hotel…"
+              className="w-full rounded-lg border border-gray-300 px-2.5 py-2 text-sm bg-white"
+            />
+          </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
             <div>
               <label className="block text-xs font-medium text-gray-500 mb-1">
@@ -351,7 +396,7 @@ function DashboardContent() {
         </div>
 
         {!isLoading && (
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
             {[
               {
                 label: "Total",
@@ -378,6 +423,11 @@ function DashboardContent() {
                 label: "Closed",
                 value: filtered.filter((i) => i.status === "closed").length,
                 className: "text-emerald-700",
+              },
+              {
+                label: "Aging",
+                value: filtered.filter((i) => isAgingIncident(i)).length,
+                className: "text-orange-800",
               },
             ].map((card) => (
               <div
@@ -448,7 +498,7 @@ function DashboardContent() {
                             {incident.report_number}
                           </p>
                           <p className="text-xs text-gray-500 mt-0.5">
-                            {incident.hotel?.name || "—"}
+                            {incident.hotel?.name || "\u2014"}
                           </p>
                         </div>
                         <StatusBadge status={incident.status} />
@@ -493,7 +543,7 @@ function DashboardContent() {
                             {incident.report_number}
                           </td>
                           <td className="px-4 py-3 text-sm text-gray-700">
-                            {incident.hotel?.name || "—"}
+                            {incident.hotel?.name || "\u2014"}
                           </td>
                           <td className="px-4 py-3 text-sm text-gray-700">
                             {INCIDENT_TYPE_LABELS[incident.incident_type]}
@@ -536,10 +586,13 @@ function DashboardContent() {
                             {incident.report_number}
                           </p>
                           <p className="text-xs text-gray-500 mt-0.5 truncate">
-                            {incident.hotel?.name || "—"}
+                            {incident.hotel?.name || "\u2014"}
                           </p>
                         </div>
-                        <StatusBadge status={incident.status} />
+                        <div className="flex flex-col items-end gap-1">
+                          <StatusBadge status={incident.status} />
+                          <AgingBadge incident={incident} />
+                        </div>
                       </div>
                       <p className="text-sm text-gray-600 mt-2">
                         {INCIDENT_TYPE_LABELS[incident.incident_type]} ·{" "}
@@ -604,10 +657,10 @@ function DashboardContent() {
                               {incident.report_number}
                             </td>
                             <td className="px-4 py-3.5 whitespace-nowrap text-sm text-gray-700">
-                              {incident.hotel?.name || "—"}
+                              {incident.hotel?.name || "\u2014"}
                             </td>
                             <td className="px-4 py-3.5 whitespace-nowrap text-sm text-gray-700 hidden lg:table-cell">
-                              {incident.reported_by_name || "—"}
+                              {incident.reported_by_name || "\u2014"}
                             </td>
                             <td className="px-4 py-3.5 whitespace-nowrap text-sm text-gray-700">
                               {INCIDENT_TYPE_LABELS[incident.incident_type]}
@@ -621,7 +674,10 @@ function DashboardContent() {
                               {SEVERITY_LABELS[incident.severity]}
                             </td>
                             <td className="px-4 py-3.5 whitespace-nowrap">
-                              <StatusBadge status={incident.status} />
+                              <div className="flex flex-wrap items-center gap-1.5">
+                                <StatusBadge status={incident.status} />
+                                <AgingBadge incident={incident} />
+                              </div>
                             </td>
                             <td className="px-4 py-3.5 whitespace-nowrap text-right text-sm">
                               <ReportActions incident={incident} />
