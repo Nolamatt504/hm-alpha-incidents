@@ -253,7 +253,7 @@ export default function NewIncidentForm() {
         subject_email: form.subject_email || null,
         witness_name: form.witness_name || null,
         witness_contact: form.witness_contact || null,
-        narrative: form.narrative || (asDraft ? "(Draft \u2014 incomplete)" : ""),
+        narrative: form.narrative || (asDraft ? "(Draft — incomplete)" : ""),
         actions_taken: form.actions_taken || null,
         contributing_factors: form.contributing_factors || null,
         miscellaneous: form.miscellaneous || null,
@@ -366,7 +366,7 @@ export default function NewIncidentForm() {
       } else {
         setDraftId(incident.id);
         setSuccessMessage(
-          `Draft ${incident.report_number} saved. Open Dashboard \u2192 Drafts \u2192 Continue when you are ready to finish.`
+          `Draft ${incident.report_number} saved. Open Dashboard → Drafts → Continue when you are ready to finish.`
         );
       }
     } catch (err) {
@@ -462,7 +462,7 @@ export default function NewIncidentForm() {
               className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0b1f3a] focus:border-transparent disabled:bg-gray-100"
             >
               <option value="">
-                {isLoadingHotels ? "Loading hotels\u2026" : "Select hotel\u2026"}
+                {isLoadingHotels ? "Loading hotels…" : "Select hotel…"}
               </option>
               {hotels.map((h) => (
                 <option key={h.id} value={h.id}>
@@ -658,7 +658,7 @@ export default function NewIncidentForm() {
               rows={5}
               value={form.narrative}
               onChange={(e) => updateField("narrative", e.target.value)}
-              placeholder="Describe what occurred\u2026"
+              placeholder="Describe what occurred…"
               className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0b1f3a]"
             />
           </div>
@@ -683,7 +683,7 @@ export default function NewIncidentForm() {
               rows={2}
               value={form.miscellaneous}
               onChange={(e) => updateField("miscellaneous", e.target.value)}
-              placeholder="Anything else worth noting\u2026"
+              placeholder="Anything else worth noting…"
               className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0b1f3a]"
             />
           </div>
@@ -708,7 +708,7 @@ export default function NewIncidentForm() {
               rows={5}
               value={form.actions_taken}
               onChange={(e) => updateField("actions_taken", e.target.value)}
-              placeholder="e.g. Guest seated, ice provided, photos of wet floor, manager notified, medical attention offered and refused\u2026"
+              placeholder="e.g. Guest seated, ice provided, photos of wet floor, manager notified, medical attention offered and refused…"
               className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0b1f3a]"
             />
           </div>
@@ -837,14 +837,14 @@ export default function NewIncidentForm() {
             disabled={isSubmitting || isSavingDraft || isLoadingHotels}
             className="w-full sm:w-auto px-5 py-3 sm:py-2.5 rounded-lg border border-gray-300 bg-white text-sm font-medium text-gray-800 hover:bg-gray-50 disabled:opacity-60"
           >
-            {isSavingDraft ? "Saving draft\u2026" : "Save Draft"}
+            {isSavingDraft ? "Saving draft…" : "Save Draft"}
           </button>
           <button
             type="submit"
             disabled={isSubmitting || isSavingDraft || isLoadingHotels}
             className="w-full sm:w-auto px-6 py-3 sm:py-2.5 rounded-lg bg-[#0b1f3a] text-white text-sm font-medium hover:bg-[#08182e] disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            {isSubmitting ? "Submitting\u2026" : "Submit Report"}
+            {isSubmitting ? "Submitting…" : "Submit Report"}
           </button>
         </div>
       </form>

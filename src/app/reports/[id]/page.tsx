@@ -293,8 +293,8 @@ function ReportDetailContent() {
             className="text-sm text-[#0b1f3a] hover:text-[#08182e] font-medium"
           >
             {archived && isCorporate(profile)
-              ? "\u2190 Back to Archives"
-              : "\u2190 Back to Dashboard"}
+              ? "← Back to Archives"
+              : "← Back to Dashboard"}
           </Link>
           <div className="flex items-center gap-2 print:hidden">
             {isCorporate(profile) && incident.status !== "draft" && (
@@ -359,7 +359,7 @@ function ReportDetailContent() {
                 {incident.report_number}
               </h1>
               <p className="text-sm text-gray-500 mt-0.5">
-                {incident.hotel?.name || "\u2014"} ·{" "}
+                {incident.hotel?.name || "—"} ·{" "}
                 {new Date(incident.incident_date_time).toLocaleString()}
               </p>
               <p className="text-sm text-gray-500 mt-1">
@@ -393,7 +393,7 @@ function ReportDetailContent() {
                 <div>
                   <p className="text-gray-500">Location</p>
                   <p className="font-medium text-gray-900">
-                    {incident.location_detail || "\u2014"}
+                    {incident.location_detail || "—"}
                   </p>
                 </div>
                 <div>
@@ -401,7 +401,7 @@ function ReportDetailContent() {
                   <p className="font-medium text-gray-900">
                     {incident.reported_date_time
                       ? new Date(incident.reported_date_time).toLocaleString()
-                      : "\u2014"}
+                      : "—"}
                   </p>
                 </div>
               </div>
@@ -415,7 +415,7 @@ function ReportDetailContent() {
                 <div>
                   <p className="text-gray-500">Subject</p>
                   <p className="font-medium text-gray-900">
-                    {incident.subject_name || "\u2014"}{" "}
+                    {incident.subject_name || "—"}{" "}
                     {incident.subject_type && (
                       <span className="text-gray-500 font-normal">
                         ({incident.subject_type})
@@ -441,7 +441,7 @@ function ReportDetailContent() {
                 <div>
                   <p className="text-gray-500">Witness</p>
                   <p className="font-medium text-gray-900">
-                    {incident.witness_name || "\u2014"}
+                    {incident.witness_name || "—"}
                   </p>
                   {incident.witness_contact && (
                     <p className="text-gray-500 text-xs mt-0.5">
@@ -622,7 +622,7 @@ function ReportDetailContent() {
                     rows={3}
                     value={comment}
                     onChange={(e) => setComment(e.target.value)}
-                    placeholder="Document a call, guest update, or next step\u2026"
+                    placeholder="Document a call, guest update, or next step…"
                     className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#0b1f3a]"
                   />
                   <button
@@ -631,7 +631,7 @@ function ReportDetailContent() {
                     disabled={commentSaving || !comment.trim()}
                     className="mt-2 px-3 py-1.5 rounded-lg bg-[#0b1f3a] text-white text-sm font-medium hover:bg-[#08182e] disabled:opacity-50"
                   >
-                    {commentSaving ? "Saving\u2026" : "Add follow-up"}
+                    {commentSaving ? "Saving…" : "Add follow-up"}
                   </button>
                 </div>
               )}
@@ -652,7 +652,7 @@ function ReportDetailContent() {
                     value={investigationNotes}
                     onChange={(e) => setInvestigationNotes(e.target.value)}
                     className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#0b1f3a]"
-                    placeholder="Add follow-up notes\u2026"
+                    placeholder="Add follow-up notes…"
                   />
                   <button
                     type="button"

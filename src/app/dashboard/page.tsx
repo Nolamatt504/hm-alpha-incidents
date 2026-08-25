@@ -498,7 +498,7 @@ function DashboardContent() {
                             {incident.report_number}
                           </p>
                           <p className="text-xs text-gray-500 mt-0.5">
-                            {incident.hotel?.name || "\u2014"}
+                            {incident.hotel?.name || "—"}
                           </p>
                         </div>
                         <StatusBadge status={incident.status} />
@@ -543,7 +543,7 @@ function DashboardContent() {
                             {incident.report_number}
                           </td>
                           <td className="px-4 py-3 text-sm text-gray-700">
-                            {incident.hotel?.name || "\u2014"}
+                            {incident.hotel?.name || "—"}
                           </td>
                           <td className="px-4 py-3 text-sm text-gray-700">
                             {INCIDENT_TYPE_LABELS[incident.incident_type]}
@@ -586,7 +586,7 @@ function DashboardContent() {
                             {incident.report_number}
                           </p>
                           <p className="text-xs text-gray-500 mt-0.5 truncate">
-                            {incident.hotel?.name || "\u2014"}
+                            {incident.hotel?.name || "—"}
                           </p>
                         </div>
                         <div className="flex flex-col items-end gap-1">
@@ -657,10 +657,10 @@ function DashboardContent() {
                               {incident.report_number}
                             </td>
                             <td className="px-4 py-3.5 whitespace-nowrap text-sm text-gray-700">
-                              {incident.hotel?.name || "\u2014"}
+                              {incident.hotel?.name || "—"}
                             </td>
                             <td className="px-4 py-3.5 whitespace-nowrap text-sm text-gray-700 hidden lg:table-cell">
-                              {incident.reported_by_name || "\u2014"}
+                              {incident.reported_by_name || "—"}
                             </td>
                             <td className="px-4 py-3.5 whitespace-nowrap text-sm text-gray-700">
                               {INCIDENT_TYPE_LABELS[incident.incident_type]}
