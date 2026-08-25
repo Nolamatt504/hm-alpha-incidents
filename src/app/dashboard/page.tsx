@@ -242,7 +242,7 @@ function DashboardContent() {
                 : needsHotel
                 ? "Hotel not assigned"
                 : isCorporate(profile)
-                ? `All properties · ${filtered.length} shown`
+                ? `Sent to corporate · ${filtered.length} shown`
                 : `Your property · ${filtered.length} shown`}
             </p>
           </div>
@@ -459,6 +459,8 @@ function DashboardContent() {
             <p className="mt-2 text-sm text-gray-500 max-w-md mx-auto">
               {hasFilters
                 ? "Try clearing filters or adjusting the date range."
+                : isCorporate(profile)
+                ? "Reports appear here after Hotel Admin sends them to corporate."
                 : "When someone files a report for your property, it will show up here."}
             </p>
             <div className="mt-5 flex flex-wrap justify-center gap-3">

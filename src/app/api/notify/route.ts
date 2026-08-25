@@ -117,9 +117,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const notifyType =
+      type === "sent_to_corporate" ? "sent_to_corporate" : "new_report";
+
     const { data: emailRows, error: rpcError } = await supabase.rpc(
       "get_incident_notify_emails",
-      { p_hotel_id: hotelId }
+      { p_hotel_id: hotelId, p_notify_type: notifyType }
     );
 
     if (rpcError) {

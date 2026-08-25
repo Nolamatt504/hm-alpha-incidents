@@ -97,7 +97,7 @@ export default function HelpPage() {
                     </td>
                     <td className="px-4 py-3">
                       Create and submit reports for their assigned hotel. View
-                      reports for that hotel only. Cannot change status, add
+                      their own reports only. Cannot change status, add
                       follow-ups, or manage users.
                     </td>
                   </tr>
@@ -106,8 +106,10 @@ export default function HelpPage() {
                       Property HR
                     </td>
                     <td className="px-4 py-3">
-                      Same hotel-scoped view, plus investigation notes, status
-                      changes, and follow-up comments. Cannot manage users.
+                      See submitted reports for their hotel (not other
+                      people&apos;s drafts), plus investigation notes, status
+                      (except Sent to Corporate), and follow-up comments.
+                      Cannot manage users or send reports to Corporate.
                     </td>
                   </tr>
                   <tr>
@@ -116,9 +118,9 @@ export default function HelpPage() {
                     </td>
                     <td className="px-4 py-3">
                       Full access for their hotel: reports, status, notes,
-                      follow-ups, and managing users at that property. The
-                      on-screen label is always <strong>Hotel Admin</strong>{" "}
-                      (not Property Admin).
+                      follow-ups, sending a report to Corporate, and managing
+                      users at that property. The on-screen label is always{" "}
+                      <strong>Hotel Admin</strong> (not Property Admin).
                     </td>
                   </tr>
                   <tr>
@@ -126,15 +128,17 @@ export default function HelpPage() {
                       Corporate Admin
                     </td>
                     <td className="px-4 py-3">
-                      See every hotel. Portfolio{" "}
+                      Blind to a report until Hotel Admin clicks{" "}
+                      <strong>Sent to Corporate</strong>. Then they get an
+                      alert and can open it from{" "}
                       <Link href="/overview" className="text-[#0b1f3a] font-medium hover:underline">
                         Overview
                       </Link>
-                      , search across properties,{" "}
+                      , search,{" "}
                       <Link href="/archives" className="text-[#0b1f3a] font-medium hover:underline">
                         Archives
                       </Link>
-                      , and manage all users and reports.
+                      , and manage users.
                     </td>
                   </tr>
                 </tbody>
@@ -183,8 +187,9 @@ export default function HelpPage() {
             </ol>
             <p className="mt-3">
               After submit, the report appears on the Dashboard with status{" "}
-              <strong>Submitted</strong>. Hotel Admin and Corporate Admin are
-              notified. An activity log records who created it and later
+              <strong>Submitted</strong> for the submitter, Property HR, and
+              Hotel Admin at that hotel. Corporate cannot see it yet and is
+              not emailed. An activity log records who created it and later
               changes.
             </p>
           </section>
@@ -218,9 +223,11 @@ export default function HelpPage() {
             </h2>
             <ul className="list-disc list-inside space-y-2">
               <li>
-                <strong>Dashboard</strong> lists reports you are allowed to see
-                (your hotel, or all hotels for Corporate). Archived reports are
-                hidden from this live list.
+                <strong>Dashboard</strong> lists reports you are allowed to
+                see. Submitters see their own. Property HR and Hotel Admin see
+                submitted reports for their hotel. Corporate sees reports after
+                Hotel Admin sends them up. Archived reports are hidden from
+                this live list.
               </li>
               <li>
                 Search by report number, subject, location, submitted by,
@@ -240,9 +247,10 @@ export default function HelpPage() {
                 investigation notes, and the activity / follow-up timeline.
               </li>
               <li>
-                Property HR, Hotel Admin, and Corporate Admin can change
-                status: Submitted → Under Review → Sent to Corporate → Closed,
-                add investigation notes, and leave follow-up comments.
+                Property HR and Hotel Admin can set Under Review or Closed,
+                add investigation notes, and leave follow-up comments. Only
+                Hotel Admin can click <strong>Sent to Corporate</strong>, which
+                is when Corporate gets the alert and can see the report.
               </li>
               <li>
                 Use <strong>Print / Save as PDF</strong> on a report. The
@@ -264,9 +272,10 @@ export default function HelpPage() {
                 <Link href="/overview" className="text-[#0b1f3a] font-medium hover:underline">
                   Overview
                 </Link>{" "}
-                is the portfolio snapshot: open vs closed vs aging by hotel,
-                severity mix, type mix, and reports still open after 7 days.
-                Hotel names link into the Dashboard with that hotel filtered.
+                is the portfolio snapshot of reports already sent to
+                corporate: open vs closed vs aging by hotel, severity mix, type
+                mix, and reports still open after 7 days. Hotel names link into
+                the Dashboard with that hotel filtered.
               </li>
               <li>
                 <Link href="/archives" className="text-[#0b1f3a] font-medium hover:underline">

@@ -12,6 +12,7 @@ import {
   getCurrentProfile,
   UserProfile,
   canManageReports,
+  canSendToCorporate,
   isCorporate,
 } from "@/lib/auth";
 import { notifyStakeholders } from "@/lib/notify";
@@ -676,7 +677,13 @@ function ReportDetailContent() {
                         "sent_to_corporate",
                         "closed",
                       ] as IncidentStatus[]
-                    ).map((s) => (
+                    )
+                      .filter(
+                        (s) =>
+                          s !== "sent_to_corporate" ||
+                          canSendToCorporate(profile)
+                      )
+                      .map((s) => (
                       <button
                         key={s}
                         type="button"

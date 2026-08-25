@@ -32,8 +32,9 @@ export default function HomePage() {
             </h1>
             <p className="mt-3 text-sm text-gray-600 max-w-xl mx-auto">
               File guest and workplace incidents in about a minute. Records are
-              confidential — only your hotel staff and Corporate Admin can see
-              them.
+              confidential. After submit, only the submitter, Property HR, and
+              Hotel Admin at that hotel can see them until Hotel Admin sends
+              the report to Corporate.
             </p>
           </div>
 
@@ -96,8 +97,9 @@ export default function HomePage() {
             </li>
             <li className="text-sm text-gray-800">
               <span className="font-semibold text-[#0b1f3a]">4.</span> Submit.
-              Hotel Admin and Corporate are notified. Save a draft if you need
-              a minute.
+              Hotel Admin and Property HR can see it. Corporate is notified
+              only after Hotel Admin sends it up. Save a draft if you need a
+              minute.
             </li>
           </ol>
 
@@ -105,23 +107,23 @@ export default function HomePage() {
             <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
               <p className="text-sm font-semibold text-gray-900">Submitter</p>
               <p className="mt-1 text-xs text-gray-600 leading-relaxed">
-                File reports for your assigned hotel. See that hotel&apos;s
-                reports. Cannot change status or users.
+                File reports for your assigned hotel. See your own reports.
+                Cannot change status or users.
               </p>
             </div>
             <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
               <p className="text-sm font-semibold text-gray-900">Hotel Admin</p>
               <p className="mt-1 text-xs text-gray-600 leading-relaxed">
-                Full access for one property: review, notes, status, and
-                managing users at that hotel. Property HR can review but not
-                manage users.
+                Full access for one property: review, notes, status, send to
+                Corporate, and managing users at that hotel. Property HR can
+                review but cannot send to Corporate or manage users.
               </p>
             </div>
             <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
               <p className="text-sm font-semibold text-gray-900">Corporate</p>
               <p className="mt-1 text-xs text-gray-600 leading-relaxed">
-                All hotels. Portfolio Overview, search, Archives, and the audit
-                trail of who did what.
+                Sees a report after Hotel Admin sends it up. Portfolio
+                Overview of those reports, Archives, and the audit trail.
               </p>
             </div>
           </div>

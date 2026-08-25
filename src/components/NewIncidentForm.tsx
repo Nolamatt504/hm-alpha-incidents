@@ -422,9 +422,10 @@ export default function NewIncidentForm() {
           You can <strong>Save Draft</strong> anytime and finish later.
         </p>
         <p className="mt-3 text-xs text-amber-900 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-          Confidential record. Only staff at this hotel and Corporate Admin can
-          see submitted reports. Write what happened <strong>and</strong> what
-          staff did while it is still fresh. Claims teams rely on that response.
+          Confidential record. After you submit, only you, Property HR, and
+          Hotel Admin at this hotel can see it until Hotel Admin sends it to
+          Corporate. Write what happened <strong>and</strong> what staff did
+          while it is still fresh. Claims teams rely on that response.
         </p>
       </div>
 
